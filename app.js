@@ -7,7 +7,7 @@ const IOU_THRESHOLD=.45;
 const MAX_BOXES=20;
 
 let model=null,stream=null,running=false,facing="environment",inferenceBusy=false;
-let lastCapture=null,currentAlert=null,violationStreak=0,lastAlertAt=0,discarded=Number(localStorage.getItem("sst_v3_discarded")||0);
+let lastCapture=null,currentAlert=null,pendingSource="",pendingConfidence=null,violationStreak=0,lastAlertAt=0,discarded=Number(localStorage.getItem("sst_v3_discarded")||0);
 let findings=JSON.parse(localStorage.getItem("sst_v3_findings")||"[]");
 
 function esc(s=""){return String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]))}
@@ -31,7 +31,7 @@ function renderFindings(){
   $("findings").innerHTML=findings.length?findings.map(f=>`
     <div class="finding">
       <div class="finding-top"><div><h3>${esc(f.title)}</h3><p>${esc(f.sector||"Sector no indicado")} · ${new Date(f.time).toLocaleString("es-AR")}</p></div><span class="tag">ALTO</span></div>
-      <p><b>${esc(f.type)}</b> · ${esc(f.source)} · confianza ${Math.round(f.confidence*100)}%</p>
+      <p><b>${esc(f.type)}</b> · ${esc(f.source)} ${f.confidence!=null?` · confianza ${Math.round(f.confidence*100)}%`:""}</p>
       <p>${esc(f.notes||"Sin observación adicional.")}</p>
       <p><b>Normativa relacionada:</b> ${esc(f.norm)}</p>
       <p><b>Acción:</b> ${esc(f.action)}</p>
@@ -98,7 +98,20 @@ function captureFrame(){
 function captureEvidence(){
   const c=captureFrame();if(!c)return;
   lastCapture=c.toDataURL("image/jpeg",.8);
-  $("modelInfo").className="status good";$("modelInfo").textContent="Evidencia capturada.";
+  currentAlert=null;
+  pendingSource="Registro manual con evidencia";
+  pendingConfidence=null;
+  $("mTitle").textContent="Registrar evidencia / hallazgo";
+  $("mNorm").textContent="La IA no confirmó un hallazgo automático. Describí lo observado para incorporarlo al informe.";
+  $("mFindingTitle").value="";
+  $("mSector").value="";
+  $("mType").value="Condición insegura";
+  $("mNotes").value="";
+  $("mNormInput").value="Normativa a validar según la condición observada y la actividad.";
+  $("mAction").value="Verificar la condición observada, evaluar el riesgo y definir la medida correctiva correspondiente.";
+  $("modal").classList.add("show");
+  $("modelInfo").className="status good";
+  $("modelInfo").textContent="Evidencia capturada. Completá el hallazgo y guardalo para incluirlo en el informe.";
 }
 
 function preprocess(video){
@@ -248,40 +261,54 @@ async function detectLoop(){
 function openConfirmedAlert(){
   if(!currentAlert)return;
   const c=captureFrame();if(c)lastCapture=c.toDataURL("image/jpeg",.8);
+  pendingSource="IA especializada";
+  pendingConfidence=currentAlert.score;
   $("mTitle").textContent="Falta de casco detectada";
   $("mNorm").textContent="Referencia orientativa: "+currentNorm();
+  $("mFindingTitle").value="Falta de casco de seguridad";
   $("mNotes").value=`Detección automática NO-Hardhat con ${Math.round(currentAlert.score*100)}% de confianza, persistente en múltiples lecturas. Validada por el inspector.`;
+  $("mNormInput").value=currentNorm();
   $("mAction").value=currentAction();
   $("modal").classList.add("show");
   $("alertBox").classList.remove("show");
 }
 function saveFinding(){
-  if(!currentAlert)return;
+  const title=$("mFindingTitle").value.trim();
+  if(!title){alert("Indicá el hallazgo o una descripción breve.");return;}
+  const source=pendingSource||"Registro manual con evidencia";
+  const confidence=pendingConfidence;
   findings.unshift({
     id:crypto.randomUUID?crypto.randomUUID():String(Date.now()),
-    title:"Falta de casco de seguridad",
-    severity:"Alto",type:$("mType").value,source:"IA especializada",
-    confidence:currentAlert.score,sector:$("mSector").value.trim(),
-    notes:$("mNotes").value.trim(),norm:currentNorm(),action:$("mAction").value.trim(),
+    title,
+    severity:"Alto",type:$("mType").value,source,
+    confidence,sector:$("mSector").value.trim(),
+    notes:$("mNotes").value.trim(),
+    norm:$("mNormInput").value.trim()||"Normativa a validar.",
+    action:$("mAction").value.trim(),
     time:new Date().toISOString(),image:lastCapture
   });
-  persist();renderFindings();$("modal").classList.remove("show");currentAlert=null;
+  persist();renderFindings();$("modal").classList.remove("show");
+  currentAlert=null;pendingSource="";pendingConfidence=null;lastCapture=null;
+  $("modelInfo").className="status good";$("modelInfo").textContent="Hallazgo guardado. Ya está disponible para el informe.";
 }
 
 function generateReport(){
   if(!findings.length){alert("No hay hallazgos registrados.");return}
-  const rows=findings.map((f,i)=>`<article class="finding"><div class="fh"><div><small>HALLAZGO ${i+1}</small><h2>${esc(f.title)}</h2><div class="muted">${esc(f.sector||"Sector no indicado")} · ${new Date(f.time).toLocaleString("es-AR")}</div></div><b>ALTO</b></div>${f.image?`<img src="${f.image}">`:""}<table><tr><th>Clasificación</th><td>${esc(f.type)}</td></tr><tr><th>Origen</th><td>${esc(f.source)}</td></tr><tr><th>Confianza IA</th><td>${Math.round(f.confidence*100)}%</td></tr><tr><th>Observación</th><td>${esc(f.notes)}</td></tr><tr><th>Normativa relacionada</th><td>${esc(f.norm)}</td></tr><tr><th>Acción recomendada</th><td>${esc(f.action)}</td></tr></table></article>`).join("");
+  const rows=findings.map((f,i)=>`<article class="finding"><div class="fh"><div><small>HALLAZGO ${i+1}</small><h2>${esc(f.title)}</h2><div class="muted">${esc(f.sector||"Sector no indicado")} · ${new Date(f.time).toLocaleString("es-AR")}</div></div><b>ALTO</b></div>${f.image?`<img src="${f.image}">`:""}<table><tr><th>Clasificación</th><td>${esc(f.type)}</td></tr><tr><th>Origen</th><td>${esc(f.source)}</td></tr>${f.confidence!=null?`<tr><th>Confianza IA</th><td>${Math.round(f.confidence*100)}%</td></tr>`:""}<tr><th>Observación</th><td>${esc(f.notes)}</td></tr><tr><th>Normativa relacionada</th><td>${esc(f.norm)}</td></tr><tr><th>Acción recomendada</th><td>${esc(f.action)}</td></tr></table></article>`).join("");
   const w=window.open("","_blank");if(!w){alert("Permití ventanas emergentes para generar el informe.");return}
-  w.document.write(`<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>Informe SST IA V3</title><style>body{margin:0;background:#eef3f7;font-family:Arial;color:#17212b}.bar{position:sticky;top:0;background:#0b1d33;padding:10px;text-align:center}.bar button{padding:11px 18px;border:0;border-radius:9px;font-weight:700}.page{max-width:900px;margin:18px auto;background:#fff;padding:32px}.head{border-bottom:4px solid #1769aa;padding-bottom:14px}.head h1{margin:3px 0;color:#0b1d33}.summary{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:18px 0}.metric{border:1px solid #d9e2ec;border-radius:12px;padding:12px}.metric strong{font-size:25px;display:block}.finding{border:1px solid #d9e2ec;border-radius:14px;padding:16px;margin:0 0 16px;break-inside:avoid}.fh{display:flex;justify-content:space-between;gap:15px}.fh h2{font-size:18px;margin:3px 0;color:#0b1d33}.fh b{background:#fee4e2;color:#b42318;padding:7px 10px;border-radius:999px;height:max-content;font-size:11px}.muted{font-size:11px;color:#607080}img{width:100%;max-height:390px;object-fit:contain;background:#f7f9fb;border-radius:10px;margin:13px 0}table{width:100%;border-collapse:collapse;font-size:12px}th,td{padding:8px;border-top:1px solid #d9e2ec;text-align:left;vertical-align:top}th{width:190px}.note{font-size:10px;color:#607080;line-height:1.5;border-top:1px solid #d9e2ec;padding-top:10px;margin-top:20px}@media(max-width:650px){.page{margin:0;padding:18px}.summary{grid-template-columns:1fr}}@media print{.bar{display:none}.page{margin:0;max-width:none}}</style></head><body><div class="bar"><button onclick="window.print()">Imprimir / Guardar como PDF</button></div><main class="page"><div class="head"><small>INSPECCIÓN VISUAL ASISTIDA POR IA — MÓDULO EPP</small><h1>Informe de Seguridad e Higiene</h1><div>${new Date().toLocaleString("es-AR")} · SST IA V3</div></div><div class="summary"><div class="metric"><strong>${findings.length}</strong><span>Hallazgos</span></div><div class="metric"><strong>${findings.filter(f=>f.source==="IA especializada").length}</strong><span>Desde IA especializada</span></div><div class="metric"><strong>${discarded}</strong><span>Alertas descartadas</span></div></div>${rows}<div class="note"><b>Alcance:</b> la detección de NO-Hardhat es una asistencia visual y no sustituye la evaluación profesional. El inspector debe validar la obligación del EPP, la tarea, el sector, el riesgo real y la normativa aplicable.</div></main></body></html>`);
+  w.document.write(`<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>Informe SST IA V3.1</title><style>body{margin:0;background:#eef3f7;font-family:Arial;color:#17212b}.bar{position:sticky;top:0;background:#0b1d33;padding:10px;text-align:center}.bar button{padding:11px 18px;border:0;border-radius:9px;font-weight:700}.page{max-width:900px;margin:18px auto;background:#fff;padding:32px}.head{border-bottom:4px solid #1769aa;padding-bottom:14px}.head h1{margin:3px 0;color:#0b1d33}.summary{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:18px 0}.metric{border:1px solid #d9e2ec;border-radius:12px;padding:12px}.metric strong{font-size:25px;display:block}.finding{border:1px solid #d9e2ec;border-radius:14px;padding:16px;margin:0 0 16px;break-inside:avoid}.fh{display:flex;justify-content:space-between;gap:15px}.fh h2{font-size:18px;margin:3px 0;color:#0b1d33}.fh b{background:#fee4e2;color:#b42318;padding:7px 10px;border-radius:999px;height:max-content;font-size:11px}.muted{font-size:11px;color:#607080}img{width:100%;max-height:390px;object-fit:contain;background:#f7f9fb;border-radius:10px;margin:13px 0}table{width:100%;border-collapse:collapse;font-size:12px}th,td{padding:8px;border-top:1px solid #d9e2ec;text-align:left;vertical-align:top}th{width:190px}.note{font-size:10px;color:#607080;line-height:1.5;border-top:1px solid #d9e2ec;padding-top:10px;margin-top:20px}@media(max-width:650px){.page{margin:0;padding:18px}.summary{grid-template-columns:1fr}}@media print{.bar{display:none}.page{margin:0;max-width:none}}</style></head><body><div class="bar"><button onclick="window.print()">Imprimir / Guardar como PDF</button></div><main class="page"><div class="head"><small>INSPECCIÓN VISUAL ASISTIDA POR IA — MÓDULO EPP</small><h1>Informe de Seguridad e Higiene</h1><div>${new Date().toLocaleString("es-AR")} · SST IA V3.1</div></div><div class="summary"><div class="metric"><strong>${findings.length}</strong><span>Hallazgos</span></div><div class="metric"><strong>${findings.filter(f=>f.source==="IA especializada").length}</strong><span>Desde IA especializada</span></div><div class="metric"><strong>${discarded}</strong><span>Alertas descartadas</span></div></div>${rows}<div class="note"><b>Alcance:</b> la detección de NO-Hardhat es una asistencia visual y no sustituye la evaluación profesional. El inspector debe validar la obligación del EPP, la tarea, el sector, el riesgo real y la normativa aplicable.</div></main></body></html>`);
   w.document.close();
 }
 
-$("threshold").oninput=()=>{$("thresholdValue").textContent=$("threshold").value+"%"};
+$("threshold").oninput=()=>{
+  const v=Number($("threshold").value);$("thresholdValue").textContent=v+"%";
+  if(v>=70){$("modelInfo").className="status warn";$("modelInfo").textContent="Confianza muy alta: podés perder cascos pequeños o lejanos. Para pruebas usá 40–50%.";}
+};
 $("startBtn").onclick=startCamera;$("stopBtn").onclick=stopCamera;$("captureBtn").onclick=captureEvidence;
 $("switchBtn").onclick=async()=>{facing=facing==="environment"?"user":"environment";await startCamera()};
 $("dismissAlert").onclick=()=>{discarded++;persist();renderFindings();$("alertBox").classList.remove("show");currentAlert=null};
 $("confirmAlert").onclick=openConfirmedAlert;
-$("cancelModal").onclick=()=>{$("modal").classList.remove("show");currentAlert=null};
+$("cancelModal").onclick=()=>{$("modal").classList.remove("show");currentAlert=null;pendingSource="";pendingConfidence=null};
 $("saveFinding").onclick=saveFinding;
 $("modal").onclick=e=>{if(e.target===$("modal"))$("modal").classList.remove("show")};
 $("reportBtn").onclick=generateReport;
