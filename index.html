@@ -28,16 +28,28 @@ header{display:flex;align-items:center;justify-content:space-between;padding:14p
 </header>
 
 <div class="mode-row">
+  <select id="legalProfile">
+    <option value="general">Normativa: Establecimiento general</option>
+    <option value="construction">Normativa: Construcción / obra</option>
+  </select>
   <select id="contextMode">
     <option value="general">Contexto: General</option>
     <option value="obra">Contexto: Obra / altura</option>
+    <option value="electrico">Contexto: Riesgo eléctrico</option>
     <option value="taller">Contexto: Taller / mantenimiento</option>
     <option value="deposito">Contexto: Depósito / logística</option>
+    <option value="incendio">Contexto: Incendio / evacuación</option>
   </select>
+</div>
+<div class="mode-row">
   <select id="helmetPolicy">
     <option value="auto">Casco: según contexto</option>
     <option value="required">Casco obligatorio</option>
     <option value="notrequired">Casco no obligatorio</option>
+  </select>
+  <select id="autoSensitivity">
+    <option value="strict">IA automática: estricta</option>
+    <option value="balanced">IA automática: balanceada</option>
   </select>
 </div>
 
@@ -66,7 +78,8 @@ header{display:flex;align-items:center;justify-content:space-between;padding:14p
   </div>
 </div>
 
-<div id="status" class="status">V2 experimental: la IA propone riesgos automáticamente. Las alertas son preventivas y requieren validación humana.</div>
+<div id="status" class="status">V2.1: la IA automática queda limitada por contexto para reducir falsos positivos. Altura solo se evalúa en “Obra / altura”.</div>
+<div id="sceneStatus" class="status">Contexto visual IA: esperando cámara…</div>
 
 <section class="section">
 <h2>Resumen</h2>

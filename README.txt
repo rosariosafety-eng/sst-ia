@@ -1,35 +1,40 @@
-SST IA V2 — versión experimental automática
+SST IA V2.1 — corrección de falsos positivos y normativa
 
-QUÉ CAMBIA RESPECTO DE V1
-- Mantiene la cámara en vivo y detección general.
-- Agrega propuestas automáticas de riesgo.
-- La IA NO registra sola: propone -> inspector confirma/descarta.
-- Primeras reglas automáticas:
-  1. Posible interacción persona–vehículo.
-  2. Posible trabajo en altura por geometría de escena.
-  3. Casco no visible en contexto de obra/altura mediante análisis experimental de la región de cabeza.
-- Mantiene registro manual para el resto de riesgos.
-- Genera informe legible e imprimible/PDF.
+CAMBIOS PRINCIPALES
+1. La detección automática de trabajo en altura SOLO se ejecuta si el usuario selecciona:
+   Contexto: Obra / altura.
+   En Riesgo eléctrico, Taller, Depósito, Incendio o General no puede disparar la regla de altura.
 
-IMPORTANTE
-La detección de trabajo en altura de esta V2 todavía es heurística. Puede dar falsos positivos si:
-- la cámara apunta hacia arriba;
-- la persona está lejos;
-- el encuadre no contiene el piso;
-- existe perspectiva forzada.
-Por eso la app pide confirmación humana.
+2. Se agregó:
+   - Contexto: Riesgo eléctrico.
+   - Contexto: Incendio / evacuación.
+   - Selector de marco normativo:
+       a) Establecimiento general -> Decreto 351/79.
+       b) Construcción / obra -> Decreto 911/96.
 
-CÓMO ACTUALIZAR GITHUB
-1. Subir index.html y app.js reemplazando los actuales.
-2. Commit changes.
-3. No hace falta tocar GitHub Pages.
-4. En iPhone, cerrar la pestaña vieja y volver a abrir la URL.
-5. Si Safari conserva una versión anterior, usar recarga o borrar datos del sitio.
+3. Trabajo en altura:
+   - Establecimiento general: Decreto 351/79, art. 200.
+   - Construcción: Decreto 911/96, arts. 52, 54, 55 y 112.
+   El Decreto 911/96 es el reglamento específico para industria de la construcción.
 
-PRUEBA SUGERIDA
-- Contexto: Obra / altura.
-- Casco: según contexto.
-- Apuntar a una foto o situación con una persona elevada.
-- Esperar 2–5 segundos.
-- Si aparece alerta amarilla, confirmar o descartar.
-- Generar informe al finalizar.
+4. Riesgo eléctrico:
+   - Establecimiento general: Decreto 351/79, arts. 95-102 + Anexo VI.
+   - Construcción: Decreto 911/96, arts. 74-87 (y art. 64 para proximidad a líneas/servicios).
+
+5. Se agregó "Contexto visual IA", que muestra las principales etiquetas que obtiene el clasificador.
+   Esto sirve para depurar qué entiende la IA de cada escena.
+
+6. Sensibilidad automática:
+   - Estricta (recomendada para pruebas): menos falsos positivos.
+   - Balanceada: más sensible.
+
+LIMITACIÓN IMPORTANTE
+La V2.1 sigue usando un detector general y un clasificador general. No es todavía un modelo SST entrenado
+específicamente para tableros abiertos, matafuegos obstruidos, arnés/no arnés, etc. Por eso:
+- puede proponer riesgos, pero requiere confirmación;
+- una instalación eléctrica detectada no equivale a condición insegura;
+- la detección de ausencia de EPP requiere un modelo específico para alcanzar buena precisión.
+
+ACTUALIZACIÓN EN GITHUB
+Reemplazar index.html y app.js en el repositorio sst-ia.
+No hace falta modificar GitHub Pages.

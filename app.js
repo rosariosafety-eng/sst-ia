@@ -1,30 +1,59 @@
 const $=id=>document.getElementById(id);
 
 const RULES=[
-{id:"height",title:"Posible trabajo en altura sin protección contra caídas visible",icon:"🪜",severity:"Alto",type:"Acto inseguro",norm:"Decreto 351/79 y requisitos aplicables según tarea/actividad. Validar condiciones reales de trabajo en altura.",action:"Detener o asegurar la tarea y verificar sistema anticaídas, anclaje, acceso, plataforma, barandas y procedimiento aplicable."},
-{id:"helmet",title:"Casco no visible donde sería requerido",icon:"⛑️",severity:"Alto",type:"Acto inseguro",norm:"Ley 19.587 y Decreto 351/79, protección personal según riesgo. Validar obligatoriedad para el sector/tarea.",action:"Verificar evaluación de riesgos y uso de protección de cabeza adecuada."},
-{id:"vehicle_person",title:"Interacción persona–vehículo",icon:"🚜",severity:"Alto",type:"Condición insegura",norm:"Ley 19.587 y Decreto 351/79; para autoelevadores verificar además normativa específica aplicable.",action:"Separar circulación peatonal y vehicular; controlar velocidad, visibilidad, señalización y operación segura."},
-{id:"eye",title:"Protección ocular no visible",icon:"🥽",severity:"Alto",type:"Acto inseguro",norm:"Ley 19.587 y Decreto 351/79, protección ocular/facial según riesgo.",action:"Verificar riesgo de proyección, radiación o partículas y EPP ocular/facial requerido."},
-{id:"electric",title:"Tablero / partes eléctricas accesibles",icon:"⚡",severity:"Alto",type:"Condición insegura",norm:"Ley 19.587 y Decreto 351/79, requisitos de seguridad eléctrica.",action:"Restringir acceso y verificar envolvente, aislamiento, protecciones, señalización y condición segura."},
-{id:"fire",title:"Matafuego / acceso de extinción obstruido",icon:"🧯",severity:"Alto",type:"Condición insegura",norm:"Decreto 351/79, protección contra incendios y medios de extinción.",action:"Liberar acceso y verificar ubicación, señalización y condición operativa del equipo."},
-{id:"walkway",title:"Obstáculo / cable en circulación",icon:"🚧",severity:"Medio",type:"Condición insegura",norm:"Ley 19.587 y Decreto 351/79, orden, limpieza y circulación segura.",action:"Retirar, proteger o canalizar el obstáculo y mantener libre la zona de paso."},
-{id:"machine",title:"Máquina / herramienta sin resguardo visible",icon:"⚙️",severity:"Alto",type:"Condición insegura",norm:"Decreto 351/79, protección de máquinas y herramientas.",action:"No operar hasta verificar resguardos, pantallas, protecciones y dispositivos de seguridad."}
+{id:"height",title:"Posible trabajo en altura sin protección contra caídas visible",icon:"🪜",severity:"Alto",type:"Acto inseguro",
+ normGeneral:"Decreto 351/79, art. 200 (trabajo en altura con peligro de caída).",
+ normConstruction:"Decreto 911/96, arts. 52, 54 y 55; art. 112 para protección personal contra caídas según diferencia de nivel.",
+ action:"Detener o asegurar la tarea y verificar protección colectiva, sistema anticaídas, anclaje, acceso, plataforma/barandas y procedimiento aplicable."},
+{id:"helmet",title:"Casco no visible donde sería requerido",icon:"⛑️",severity:"Alto",type:"Acto inseguro",
+ normGeneral:"Ley 19.587 y Decreto 351/79, Cap. 19 (equipos y elementos de protección personal) según riesgo.",
+ normConstruction:"Decreto 911/96, capítulo de Equipos y Elementos de Protección Personal, según tarea y riesgo.",
+ action:"Verificar evaluación de riesgos, obligatoriedad del casco y uso de protección de cabeza adecuada."},
+{id:"vehicle_person",title:"Interacción persona–vehículo",icon:"🚜",severity:"Alto",type:"Condición insegura",
+ normGeneral:"Ley 19.587 y Decreto 351/79; si intervienen autoelevadores, verificar además Resolución SRT 960/2015.",
+ normConstruction:"Decreto 911/96 y requisitos aplicables a circulación/equipos móviles; para autoelevadores verificar normativa específica aplicable.",
+ action:"Separar circulación peatonal y vehicular; controlar velocidad, visibilidad, señalización y operación segura."},
+{id:"eye",title:"Protección ocular no visible",icon:"🥽",severity:"Alto",type:"Acto inseguro",
+ normGeneral:"Ley 19.587 y Decreto 351/79, Cap. 19, protección ocular/facial según riesgo.",
+ normConstruction:"Decreto 911/96, EPP según tarea y riesgo de proyección/partículas.",
+ action:"Verificar riesgo de proyección, radiación o partículas y EPP ocular/facial requerido."},
+{id:"electric",title:"Posible instalación / partes eléctricas accesibles",icon:"⚡",severity:"Alto",type:"Condición insegura",
+ normGeneral:"Decreto 351/79, arts. 95 a 102 y Anexo VI (Instalaciones Eléctricas).",
+ normConstruction:"Decreto 911/96, arts. 74 a 87; art. 64 cuando existan trabajos próximos a líneas de servicios.",
+ action:"Restringir acceso si corresponde y verificar tensión, envolvente, aislamiento, protecciones, bloqueo/consignación, señalización y condición segura."},
+{id:"fire",title:"Matafuego / acceso de extinción obstruido",icon:"🧯",severity:"Alto",type:"Condición insegura",
+ normGeneral:"Decreto 351/79, arts. 160 a 187 y Anexo VII (Protección contra Incendios).",
+ normConstruction:"Decreto 911/96, capítulo de Prevención y Protección contra Incendios (desde art. 88).",
+ action:"Liberar acceso y verificar ubicación, señalización, tipo, mantenimiento y condición operativa del equipo."},
+{id:"walkway",title:"Obstáculo / cable en circulación",icon:"🚧",severity:"Medio",type:"Condición insegura",
+ normGeneral:"Ley 19.587 y Decreto 351/79, condiciones de orden, limpieza y circulación segura.",
+ normConstruction:"Decreto 911/96, condiciones de lugares de trabajo, circulación, orden y protección.",
+ action:"Retirar, proteger o canalizar el obstáculo y mantener libre la zona de paso."},
+{id:"machine",title:"Máquina / herramienta sin resguardo visible",icon:"⚙️",severity:"Alto",type:"Condición insegura",
+ normGeneral:"Decreto 351/79, Cap. 15 (Máquinas y Herramientas).",
+ normConstruction:"Decreto 911/96, requisitos aplicables a máquinas, herramientas y equipos de obra.",
+ action:"No operar hasta verificar resguardos, pantallas, protecciones y dispositivos de seguridad."}
 ];
 
 let stream=null,coco=null,mobile=null,running=false,facing="environment";
 let findings=JSON.parse(localStorage.getItem("sst_v2_findings")||"[]");
 let pendingRule=null,lastCapture=null,currentProposal=null,lastProposalKey="",lastProposalAt=0;
+let lastSceneCheck=0,lastSceneInfo={text:"",items:[],electrical:false,tool:false,screen:false};
+function currentNorm(rule){
+ const profile=$("legalProfile")?.value||"general";
+ return profile==="construction" ? (rule.normConstruction||rule.normGeneral||"") : (rule.normGeneral||rule.normConstruction||"");
+}
 let lastHeadCheck=0,lastHelmetResult=null;
 
 function persist(){localStorage.setItem("sst_v2_findings",JSON.stringify(findings))}
 function esc(s=""){return String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]))}
 function renderRules(){
- $("ruleList").innerHTML=RULES.map(r=>`<div class="rule" data-rule="${r.id}"><div class="ico">${r.icon}</div><div><strong>${r.title}</strong><small>${r.severity} · ${r.norm}</small></div></div>`).join("");
+ $("ruleList").innerHTML=RULES.map(r=>`<div class="rule" data-rule="${r.id}"><div class="ico">${r.icon}</div><div><strong>${r.title}</strong><small>${r.severity} · ${currentNorm(r)}</small></div></div>`).join("");
  document.querySelectorAll(".rule").forEach(e=>e.onclick=()=>openRule(e.dataset.rule,"manual/guiado"));
 }
 function openRule(id,source="manual/guiado",notes=""){
  pendingRule=RULES.find(r=>r.id===id);if(!pendingRule)return;
- $("mTitle").textContent=pendingRule.title;$("mNorm").textContent="Referencia orientativa: "+pendingRule.norm;
+ $("mTitle").textContent=pendingRule.title;$("mNorm").textContent="Referencia orientativa: "+currentNorm(pendingRule);
  $("mType").value=pendingRule.type;$("mNotes").value=notes;$("mAction").value=pendingRule.action;
  $("modal").classList.add("show");
  if(source==="IA automática") $("mNotes").dataset.source="IA automática"; else delete $("mNotes").dataset.source;
@@ -32,7 +61,7 @@ function openRule(id,source="manual/guiado",notes=""){
 function saveFinding(){
  if(!pendingRule)return;
  const source=$("mNotes").dataset.source||"manual/guiado";
- findings.unshift({id:crypto.randomUUID?crypto.randomUUID():String(Date.now()),ruleId:pendingRule.id,title:pendingRule.title,severity:pendingRule.severity,type:$("mType").value,norm:pendingRule.norm,sector:$("mSector").value.trim(),notes:$("mNotes").value.trim(),action:$("mAction").value.trim(),time:new Date().toISOString(),source,image:lastCapture});
+ findings.unshift({id:crypto.randomUUID?crypto.randomUUID():String(Date.now()),ruleId:pendingRule.id,title:pendingRule.title,severity:pendingRule.severity,type:$("mType").value,norm:currentNorm(pendingRule),sector:$("mSector").value.trim(),notes:$("mNotes").value.trim(),action:$("mAction").value.trim(),time:new Date().toISOString(),source,image:lastCapture});
  persist();renderFindings();$("modal").classList.remove("show");delete $("mNotes").dataset.source;
 }
 function renderFindings(){
@@ -74,9 +103,17 @@ function boxNear(a,b){
  const ac=[a[0]+a[2]/2,a[1]+a[3]/2],bc=[b[0]+b[2]/2,b[1]+b[3]/2];const d=Math.hypot(ac[0]-bc[0],ac[1]-bc[1]);return d<Math.max(a[2],a[3],b[2],b[3])*1.35;
 }
 function elevatedScore(box,W,H){
- const [x,y,w,h]=box, bottom=(y+h)/H, relH=h/H, centerY=(y+h/2)/H;
- // Experimental geometry: person reasonably large but feet/end of bbox remain well above lower frame.
- let score=0;if(relH>.22)score+=.25;if(bottom<.83)score+=.35;if(centerY<.62)score+=.20;if(bottom<.72)score+=.15;return Math.min(.95,score);
+ const [x,y,w,h]=box;
+ const bottom=(y+h)/H, relH=h/H, centerY=(y+h/2)/H, top=y/H;
+ // V2.1: regla deliberadamente conservadora. Solo se usa en contexto "obra".
+ // Requiere persona visible, con tamaño suficiente y cuyo extremo inferior quede claramente elevado.
+ let score=0;
+ if(relH>.24) score+=.22;
+ if(bottom<.76) score+=.34;
+ if(bottom<.66) score+=.18;
+ if(centerY<.55) score+=.16;
+ if(top>.02) score+=.05;
+ return Math.min(.95,score);
 }
 async function classifyHead(person){
  if(!mobile||Date.now()-lastHeadCheck<3200)return lastHelmetResult;
@@ -90,28 +127,99 @@ async function classifyHead(person){
   lastHelmetResult={helmet,text,top:res[0]?.probability||0};return lastHelmetResult;
  }catch(e){return null}
 }
+
+async function classifyScene(){
+ if(!mobile || Date.now()-lastSceneCheck<2400) return lastSceneInfo;
+ lastSceneCheck=Date.now();
+ try{
+   const c=captureFrame();
+   if(!c) return lastSceneInfo;
+   const res=await mobile.classify(c,8);
+   const items=res.map(r=>({name:r.className.toLowerCase(),p:r.probability}));
+   const text=items.map(x=>x.name).join(" | ");
+   const electrical=/switch|electric|electrical|plug|socket|power supply|power drill|meter|oscilloscope|control panel|fuse|circuit/.test(text);
+   const tool=/power drill|drill|chain saw|circular saw|hammer|screwdriver/.test(text);
+   const screen=/monitor|screen|television|laptop|notebook|desktop computer/.test(text);
+   lastSceneInfo={text,items,electrical,tool,screen};
+   const brief=items.slice(0,3).map(x=>`${x.name} ${Math.round(x.p*100)}%`).join(" · ");
+   $("sceneStatus").textContent="Contexto visual IA: "+(brief||"sin clasificación");
+   return lastSceneInfo;
+ }catch(e){ return lastSceneInfo; }
+}
+
 async function inferRisk(preds){
  const persons=preds.filter(p=>p.class==="person"&&p.score>.55);
  const vehicles=preds.filter(p=>["car","truck","bus","motorcycle"].includes(p.class)&&p.score>.45);
  const W=$("video").videoWidth||1280,H=$("video").videoHeight||720;
  const context=$("contextMode").value,helmetPolicy=$("helmetPolicy").value;
+ const sensitivity=$("autoSensitivity")?.value||"strict";
+ const scene=await classifyScene();
  let candidates=[];
- // Person-vehicle
- persons.forEach(p=>vehicles.forEach(v=>{if(boxNear(p.bbox,v.bbox))candidates.push({key:"vehicle",ruleId:"vehicle_person",title:"⚠️ Posible interacción persona–vehículo",reason:"La IA detectó una persona y un vehículo próximos en la misma escena.",confidence:.78,box:p.bbox,severity:"Alto"})}));
- // Height / fall risk
- for(const p of persons){
-   let s=elevatedScore(p.bbox,W,H);if(context==="obra")s+=.12;if(context==="taller")s+=.03;
-   if(s>=.64){
-     candidates.push({key:"height",ruleId:"height",title:"⚠️ Posible trabajo en altura",reason:"La geometría de la escena sugiere que la persona podría encontrarse elevada respecto del plano inferior visible. Confirmar altura real y protección contra caídas.",confidence:Math.min(.91,s),box:p.bbox,severity:"Alto"});
-     const hp=helmetPolicy==="required"||(helmetPolicy==="auto"&&context==="obra");
-     if(hp){
-       const hr=await classifyHead(p);
-       if(hr&&!hr.helmet)candidates.push({key:"helmet-height",ruleId:"helmet",title:"⚠️ Casco no visible en contexto de altura/obra",reason:"La persona fue detectada en una escena compatible con trabajo elevado y el clasificador de la región de cabeza no identificó un casco. Confirmar visualmente.",confidence:.62,box:p.bbox,severity:"Alto"});
+
+ // 1) Persona-vehículo: solo en contextos donde tiene sentido.
+ if(["general","obra","deposito"].includes(context)){
+   persons.forEach(p=>vehicles.forEach(v=>{
+     if(boxNear(p.bbox,v.bbox)) candidates.push({
+       key:"vehicle",ruleId:"vehicle_person",
+       title:"⚠️ Posible interacción persona–vehículo",
+       reason:"La IA detectó una persona y un vehículo próximos en la misma escena. Verificar segregación, trayectoria y distancia real.",
+       confidence:.78,box:p.bbox,severity:"Alto"
+     });
+   }));
+ }
+
+ // 2) Trabajo en altura: V2.1 SOLO en contexto explícito Obra/altura.
+ if(context==="obra"){
+   for(const p of persons){
+     const s=elevatedScore(p.bbox,W,H);
+     const threshold=sensitivity==="strict" ? .72 : .64;
+     if(s>=threshold){
+       candidates.push({
+         key:"height",ruleId:"height",
+         title:"⚠️ Posible trabajo en altura",
+         reason:"En modo Obra/altura, la geometría de la persona sugiere una posición elevada respecto del plano inferior visible. La IA no puede medir metros: confirmar diferencia de nivel y protecciones.",
+         confidence:Math.min(.91,s),box:p.bbox,severity:"Alto"
+       });
+       const hp=helmetPolicy==="required"||(helmetPolicy==="auto");
+       if(hp){
+         const hr=await classifyHead(p);
+         if(hr&&!hr.helmet) candidates.push({
+           key:"helmet-height",ruleId:"helmet",
+           title:"⚠️ Casco no identificado en contexto de obra",
+           reason:"La IA no identificó un casco en la región de cabeza. Esta detección es experimental; confirmar visualmente antes de registrar.",
+           confidence:.60,box:p.bbox,severity:"Alto"
+         });
+       }
      }
    }
  }
- if(!candidates.length)return null;
- candidates.sort((a,b)=>b.confidence-a.confidence);return candidates[0];
+
+ // 3) Riesgo eléctrico: nunca dispara altura. Usa clasificación contextual.
+ if(context==="electrico" && scene.electrical){
+   const p=persons[0];
+   candidates.push({
+     key:"electric-scene",ruleId:"electric",
+     title:"⚠️ Posible elemento / instalación eléctrica",
+     reason:"El clasificador visual encontró etiquetas compatibles con equipamiento eléctrico. Verificar si existen partes activas accesibles, tablero abierto, falta de protección, señalización o bloqueo. La presencia de un elemento eléctrico por sí sola NO implica incumplimiento.",
+     confidence:Math.max(.58, scene.items.find(x=>/switch|electric|electrical|plug|socket|power|meter|oscilloscope|fuse|circuit/.test(x.name))?.p||.58),
+     box:p?.bbox||null,severity:"Alto"
+   });
+ }
+
+ // 4) Taller: si reconoce herramienta motorizada, propone revisión, no ausencia automática de EPP.
+ if(context==="taller" && scene.tool){
+   const p=persons[0];
+   candidates.push({
+     key:"tool-scene",ruleId:"machine",
+     title:"⚠️ Herramienta motorizada detectada: revisar protecciones",
+     reason:"La IA identificó una etiqueta compatible con herramienta motorizada. Verificar resguardo, estado, método de uso y EPP requerido; no se presume incumplimiento automáticamente.",
+     confidence:.60,box:p?.bbox||null,severity:"Alto"
+   });
+ }
+
+ if(!candidates.length) return null;
+ candidates.sort((a,b)=>b.confidence-a.confidence);
+ return candidates[0];
 }
 function showProposal(p){
  if(!p)return;
@@ -119,7 +227,7 @@ function showProposal(p){
  if(lastProposalKey===key&&now-lastProposalAt<9000)return;
  currentProposal=p;lastProposalKey=key;lastProposalAt=now;
  $("autoTitle").textContent=p.title;$("autoConfidence").textContent=`conf. experimental ${Math.round(p.confidence*100)}%`;$("autoReason").textContent=p.reason;
- const r=RULES.find(x=>x.id===p.ruleId);$("autoNorm").textContent="Referencia: "+(r?.norm||"Validar normativa aplicable.");$("autoBox").classList.add("show");
+ const r=RULES.find(x=>x.id===p.ruleId);$("autoNorm").textContent="Referencia: "+(r?currentNorm(r):"Validar normativa aplicable.");$("autoBox").classList.add("show");
 }
 async function detectLoop(){
  if(!running)return;
@@ -139,10 +247,27 @@ function generateReport(){
  const hi=findings.filter(f=>f.severity==="Alto").length,med=findings.filter(f=>f.severity==="Medio").length,auto=findings.filter(f=>f.source==="IA automática").length;
  const rows=findings.map((f,i)=>`<article class="finding"><div class="head"><div><small>HALLAZGO ${i+1}</small><h2>${esc(f.title)}</h2><div class="muted">${esc(f.sector||"Sector no indicado")} · ${new Date(f.time).toLocaleString("es-AR")}</div></div><b class="${f.severity==="Alto"?"high":"med"}">${esc(f.severity)}</b></div>${f.image?`<img src="${f.image}">`:""}<table><tr><th>Clasificación</th><td>${esc(f.type)}</td></tr><tr><th>Origen</th><td>${esc(f.source)}</td></tr><tr><th>Observación</th><td>${esc(f.notes||"Sin observación adicional.")}</td></tr><tr><th>Normativa relacionada</th><td>${esc(f.norm)}</td></tr><tr><th>Acción recomendada</th><td>${esc(f.action)}</td></tr></table></article>`).join("");
  const w=window.open("","_blank");if(!w){alert("Permití ventanas emergentes para generar el informe.");return}
- w.document.write(`<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>Informe SST IA V2</title><style>body{margin:0;background:#eef3f7;font-family:Arial;color:#17212b}.bar{position:sticky;top:0;background:#0b1d33;padding:10px;text-align:center}.bar button{padding:11px 18px;border:0;border-radius:9px;font-weight:700}.page{max-width:900px;margin:18px auto;background:#fff;padding:32px}.title{border-bottom:4px solid #1769aa;padding-bottom:14px}.title h1{margin:3px 0;color:#0b1d33}.summary{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:18px 0}.metric{border:1px solid #d9e2ec;border-radius:12px;padding:12px}.metric b{font-size:25px;display:block}.finding{border:1px solid #d9e2ec;border-radius:14px;padding:16px;margin:0 0 16px;break-inside:avoid}.head{display:flex;justify-content:space-between;gap:15px}.head h2{font-size:18px;margin:3px 0;color:#0b1d33}.muted{font-size:11px;color:#607080}.high,.med{border-radius:999px;padding:7px 10px;font-size:11px;height:max-content}.high{background:#fee4e2;color:#b42318}.med{background:#fff1cf;color:#a65d00}img{width:100%;max-height:390px;object-fit:contain;background:#f7f9fb;border-radius:10px;margin:13px 0}table{width:100%;border-collapse:collapse;font-size:12px}th,td{padding:8px;border-top:1px solid #d9e2ec;text-align:left;vertical-align:top}th{width:190px}.note{font-size:10px;color:#607080;line-height:1.5;border-top:1px solid #d9e2ec;padding-top:10px;margin-top:20px}@media(max-width:650px){.page{margin:0;padding:18px}.summary{grid-template-columns:1fr 1fr}}@media print{.bar{display:none}.page{margin:0;max-width:none;box-shadow:none}}</style></head><body><div class="bar"><button onclick="window.print()">Imprimir / Guardar como PDF</button></div><main class="page"><div class="title"><small>INSPECCIÓN VISUAL ASISTIDA POR IA</small><h1>Informe de Seguridad e Higiene</h1><div>${new Date().toLocaleString("es-AR")} · SST IA V2</div></div><div class="summary"><div class="metric"><b>${findings.length}</b><span>Hallazgos</span></div><div class="metric"><b>${hi}</b><span>Altos</span></div><div class="metric"><b>${med}</b><span>Medios</span></div><div class="metric"><b>${auto}</b><span>Desde IA</span></div></div>${rows}<div class="note"><b>Alcance:</b> las alertas de IA son preventivas y experimentales. La confirmación de cumplimiento/incumplimiento requiere evaluación profesional y verificación de condiciones reales, documentación, mediciones y normativa específica aplicable.</div></main></body></html>`);w.document.close();
+ w.document.write(`<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>Informe SST IA V2.1</title><style>body{margin:0;background:#eef3f7;font-family:Arial;color:#17212b}.bar{position:sticky;top:0;background:#0b1d33;padding:10px;text-align:center}.bar button{padding:11px 18px;border:0;border-radius:9px;font-weight:700}.page{max-width:900px;margin:18px auto;background:#fff;padding:32px}.title{border-bottom:4px solid #1769aa;padding-bottom:14px}.title h1{margin:3px 0;color:#0b1d33}.summary{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:18px 0}.metric{border:1px solid #d9e2ec;border-radius:12px;padding:12px}.metric b{font-size:25px;display:block}.finding{border:1px solid #d9e2ec;border-radius:14px;padding:16px;margin:0 0 16px;break-inside:avoid}.head{display:flex;justify-content:space-between;gap:15px}.head h2{font-size:18px;margin:3px 0;color:#0b1d33}.muted{font-size:11px;color:#607080}.high,.med{border-radius:999px;padding:7px 10px;font-size:11px;height:max-content}.high{background:#fee4e2;color:#b42318}.med{background:#fff1cf;color:#a65d00}img{width:100%;max-height:390px;object-fit:contain;background:#f7f9fb;border-radius:10px;margin:13px 0}table{width:100%;border-collapse:collapse;font-size:12px}th,td{padding:8px;border-top:1px solid #d9e2ec;text-align:left;vertical-align:top}th{width:190px}.note{font-size:10px;color:#607080;line-height:1.5;border-top:1px solid #d9e2ec;padding-top:10px;margin-top:20px}@media(max-width:650px){.page{margin:0;padding:18px}.summary{grid-template-columns:1fr 1fr}}@media print{.bar{display:none}.page{margin:0;max-width:none;box-shadow:none}}</style></head><body><div class="bar"><button onclick="window.print()">Imprimir / Guardar como PDF</button></div><main class="page"><div class="title"><small>INSPECCIÓN VISUAL ASISTIDA POR IA</small><h1>Informe de Seguridad e Higiene</h1><div>${new Date().toLocaleString("es-AR")} · SST IA V2.1</div></div><div class="summary"><div class="metric"><b>${findings.length}</b><span>Hallazgos</span></div><div class="metric"><b>${hi}</b><span>Altos</span></div><div class="metric"><b>${med}</b><span>Medios</span></div><div class="metric"><b>${auto}</b><span>Desde IA</span></div></div>${rows}<div class="note"><b>Alcance:</b> las alertas de IA son preventivas y experimentales. La confirmación de cumplimiento/incumplimiento requiere evaluación profesional y verificación de condiciones reales, documentación, mediciones y normativa específica aplicable.</div></main></body></html>`);w.document.close();
 }
 
 $("startBtn").onclick=startCamera;$("stopBtn").onclick=stopCamera;$("captureBtn").onclick=captureEvidence;$("switchBtn").onclick=async()=>{facing=facing==="environment"?"user":"environment";await startCamera()};
 $("cancelModal").onclick=()=>{$("modal").classList.remove("show");delete $("mNotes").dataset.source};$("saveFinding").onclick=saveFinding;$("modal").onclick=e=>{if(e.target===$("modal"))$("modal").classList.remove("show")};
 $("reportBtn").onclick=generateReport;$("clearBtn").onclick=()=>{if(confirm("¿Borrar todos los hallazgos?")){findings=[];persist();renderFindings()}};
+
+["contextMode","legalProfile","autoSensitivity"].forEach(id=>{
+ const el=$(id); if(el) el.addEventListener("change",()=>{
+   $("autoBox").classList.remove("show"); currentProposal=null; lastProposalKey="";
+   if(id==="legalProfile") renderRules();
+   if(id==="contextMode"){
+     const ctx=$("contextMode").value;
+     if(ctx==="obra" && $("legalProfile").value==="general"){
+       $("status").textContent="Modo Obra/altura seleccionado. Si se trata de industria de la construcción, elegí también “Normativa: Construcción / obra” para aplicar Decreto 911/96.";
+     } else if(ctx==="electrico"){
+       $("status").textContent="Modo Riesgo eléctrico: la regla automática de trabajo en altura queda desactivada.";
+     } else {
+       $("status").textContent="V2.1: reglas automáticas limitadas por contexto para reducir falsos positivos.";
+     }
+   }
+ });
+});
 window.addEventListener("resize",resizeCanvas);renderRules();renderFindings();
