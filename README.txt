@@ -1,22 +1,35 @@
-SST IA — V1
+SST IA V2 — versión experimental automática
 
-Qué hace
-- Abre la cámara del celular.
-- Ejecuta detección general de objetos/personas en el navegador con COCO-SSD.
-- Dibuja cajas de detección en vivo.
-- Genera una alerta experimental de proximidad persona–vehículo.
-- Permite capturar evidencia y registrar condiciones/actos inseguros.
-- Relaciona hallazgos con normativa argentina inicial.
-- Guarda hallazgos en el navegador y exporta JSON.
+QUÉ CAMBIA RESPECTO DE V1
+- Mantiene la cámara en vivo y detección general.
+- Agrega propuestas automáticas de riesgo.
+- La IA NO registra sola: propone -> inspector confirma/descarta.
+- Primeras reglas automáticas:
+  1. Posible interacción persona–vehículo.
+  2. Posible trabajo en altura por geometría de escena.
+  3. Casco no visible en contexto de obra/altura mediante análisis experimental de la región de cabeza.
+- Mantiene registro manual para el resto de riesgos.
+- Genera informe legible e imprimible/PDF.
 
-Cómo probarlo
-1. Debe publicarse por HTTPS (o localhost). No alcanza con abrir index.html como archivo local en iPhone/Android.
-2. Subí la carpeta a GitHub Pages, Netlify, Vercel o cualquier hosting HTTPS.
-3. Abrí la URL desde el celular y autorizá la cámara.
-4. Tocá “Iniciar inspección”.
+IMPORTANTE
+La detección de trabajo en altura de esta V2 todavía es heurística. Puede dar falsos positivos si:
+- la cámara apunta hacia arriba;
+- la persona está lejos;
+- el encuadre no contiene el piso;
+- existe perspectiva forzada.
+Por eso la app pide confirmación humana.
 
-Limitación de la V1
-El detector incluido es general. Todavía NO reconoce de forma confiable casco, antiparras, guantes, matafuego obstruido, tablero abierto, resguardos, derrames, etc. La interfaz y el motor de reglas están preparados para incorporar un modelo SST específico (YOLO/ONNX) en la siguiente etapa.
+CÓMO ACTUALIZAR GITHUB
+1. Subir index.html y app.js reemplazando los actuales.
+2. Commit changes.
+3. No hace falta tocar GitHub Pages.
+4. En iPhone, cerrar la pestaña vieja y volver a abrir la URL.
+5. Si Safari conserva una versión anterior, usar recarga o borrar datos del sitio.
 
-Normativa base
-Ley 19.587; Decreto 351/79; Anexos VI y VII; Resolución MTEySS 295/2003; Resolución SRT 960/2015 cuando corresponda.
+PRUEBA SUGERIDA
+- Contexto: Obra / altura.
+- Casco: según contexto.
+- Apuntar a una foto o situación con una persona elevada.
+- Esperar 2–5 segundos.
+- Si aparece alerta amarilla, confirmar o descartar.
+- Generar informe al finalizar.
