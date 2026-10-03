@@ -1,40 +1,66 @@
-SST IA V2.1 — corrección de falsos positivos y normativa
+SST IA V3 — Módulo especializado EPP / Casco
 
-CAMBIOS PRINCIPALES
-1. La detección automática de trabajo en altura SOLO se ejecuta si el usuario selecciona:
-   Contexto: Obra / altura.
-   En Riesgo eléctrico, Taller, Depósito, Incendio o General no puede disparar la regla de altura.
+OBJETIVO
+Esta versión elimina las heurísticas de "trabajo en altura" y las inferencias generales que generaban
+falsos positivos. La V3 usa un modelo YOLOv8n específico para casco, convertido a TensorFlow.js.
 
-2. Se agregó:
-   - Contexto: Riesgo eléctrico.
-   - Contexto: Incendio / evacuación.
-   - Selector de marco normativo:
-       a) Establecimiento general -> Decreto 351/79.
-       b) Construcción / obra -> Decreto 911/96.
+MODELO
+Fuente:
+https://huggingface.co/lanseria/yolov8n-hard-hat-detection_web_model
 
-3. Trabajo en altura:
-   - Establecimiento general: Decreto 351/79, art. 200.
-   - Construcción: Decreto 911/96, arts. 52, 54, 55 y 112.
-   El Decreto 911/96 es el reglamento específico para industria de la construcción.
+Clases:
+- Hardhat
+- NO-Hardhat
 
-4. Riesgo eléctrico:
-   - Establecimiento general: Decreto 351/79, arts. 95-102 + Anexo VI.
-   - Construcción: Decreto 911/96, arts. 74-87 (y art. 64 para proximidad a líneas/servicios).
+El modelo card reporta mAP@0.5 = 0.836 sobre el dataset de validación hard-hat-detection.
 
-5. Se agregó "Contexto visual IA", que muestra las principales etiquetas que obtiene el clasificador.
-   Esto sirve para depurar qué entiende la IA de cada escena.
+COMPORTAMIENTO
+- Verde: Hardhat.
+- Rojo: NO-Hardhat.
+- La app NO considera "sin casco" simplemente porque no detectó un casco.
+- Solo propone alerta cuando existe una detección positiva NO-Hardhat.
+- Para reducir falsos positivos, la detección debe repetirse en varias lecturas consecutivas.
+- El inspector confirma o descarta la alerta.
+- Al confirmar se toma evidencia y se genera el hallazgo.
+- El informe final permite imprimir/guardar como PDF.
 
-6. Sensibilidad automática:
-   - Estricta (recomendada para pruebas): menos falsos positivos.
-   - Balanceada: más sensible.
+IMPORTANTE
+La primera carga requiere internet para descargar aproximadamente 12 MB del modelo desde Hugging Face.
+El navegador puede almacenar el modelo en caché.
 
-LIMITACIÓN IMPORTANTE
-La V2.1 sigue usando un detector general y un clasificador general. No es todavía un modelo SST entrenado
-específicamente para tableros abiertos, matafuegos obstruidos, arnés/no arnés, etc. Por eso:
-- puede proponer riesgos, pero requiere confirmación;
-- una instalación eléctrica detectada no equivale a condición insegura;
-- la detección de ausencia de EPP requiere un modelo específico para alcanzar buena precisión.
+ACTUALIZAR GITHUB PAGES
+1. Reemplazar index.html y app.js del repositorio actual.
+2. README.txt es opcional.
+3. Commit changes.
+4. No modificar Settings > Pages.
+5. Abrir de nuevo https://rosariosafety-eng.github.io/sst-ia/
+6. Si aparece la versión anterior, cerrar la pestaña y abrir de nuevo o hacer recarga completa.
 
-ACTUALIZACIÓN EN GITHUB
-Reemplazar index.html y app.js en el repositorio sst-ia.
-No hace falta modificar GitHub Pages.
+PRUEBA RECOMENDADA
+1. Normativa: Construcción / obra.
+2. Casco: obligatorio.
+3. Confianza mínima: 45%.
+4. Confirmación IA: 3 lecturas.
+5. Probar imágenes/personas:
+   - con casco;
+   - sin casco;
+   - sin personas;
+   - gorra común;
+   - casco parcialmente oculto.
+6. Registrar falsos positivos y falsos negativos.
+
+SIGUIENTE MÓDULO
+Después de validar casco/no casco, incorporar un segundo detector para:
+- Safety Vest / NO-Safety Vest
+- Goggles / NO-Goggles
+- Gloves / NO-Gloves
+
+Luego se agregan modelos/datasets específicos para:
+- riesgo eléctrico;
+- incendio/evacuación;
+- máquinas/herramientas;
+- caídas y trabajo en altura.
+
+Nota de licencia:
+Antes de uso productivo/comercial conviene verificar las condiciones de licencia del modelo y de
+las herramientas de exportación asociadas.
