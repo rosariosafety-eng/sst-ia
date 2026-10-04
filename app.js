@@ -1,7 +1,29 @@
 const $=id=>document.getElementById(id);
 const MODEL_URL='https://huggingface.co/ayushgupta7777/safetyvision-yolov8/resolve/main/v2/best_640.onnx';
 const LABELS=['Fall-Detected','Gloves','Goggles','Hardhat','Mask','NO-Gloves','NO-Goggles','NO-Hardhat','NO-Mask','NO-Safety Vest','No_Harness','Person','Safety Vest'];
-const INPUT=640,SCORE=.42,IOU=.45,MAX=30;
+const INPUT=640,IOU=.45,MAX=40;
+const LABEL_ES={
+  'Fall-Detected':'CAÍDA DETECTADA',
+  'Gloves':'GUANTES',
+  'Goggles':'ANTIPARRAS',
+  'Hardhat':'CASCO',
+  'Mask':'PROTECCIÓN RESPIRATORIA',
+  'NO-Gloves':'SIN GUANTES',
+  'NO-Goggles':'SIN ANTIPARRAS',
+  'NO-Hardhat':'SIN CASCO',
+  'NO-Mask':'SIN PROTECCIÓN RESPIRATORIA',
+  'NO-Safety Vest':'SIN CHALECO',
+  'No_Harness':'SIN ARNÉS',
+  'Person':'PERSONA',
+  'Safety Vest':'CHALECO'
+};
+const SENSITIVITY={
+  max:{score:.25,streak:1,cooldown:4500,delay:420,tiles:true},
+  high:{score:.32,streak:1,cooldown:6500,delay:550,tiles:true},
+  balanced:{score:.42,streak:2,cooldown:12000,delay:850,tiles:false}
+};
+function sensitivityCfg(){return SENSITIVITY[$('sensitivityMode')?.value||'max']||SENSITIVITY.max}
+let tileIndex=0;
 const VIOLATIONS={
   'Fall-Detected':{title:'Caída / evento de caída detectado',category:'Caídas',type:'Evento / casi accidente',ppe:null,severity:'Crítico'},
   'NO-Hardhat':{title:'Persona sin casco detectada',category:'EPP',type:'Acto inseguro',ppe:'reqHardhat',severity:'Alto'},
@@ -36,18 +58,144 @@ async function startCamera(){try{stopCamera();if(!await loadModel())return;strea
 function stopCamera(){running=false;busy=false;if(stream){stream.getTracks().forEach(t=>t.stop());stream=null}$('video').srcObject=null;$('placeholder').style.display='grid';$('onlinePill').textContent='● cámara inactiva';$('onlinePill').classList.remove('on');$('startBtn').disabled=false;$('stopBtn').disabled=true;$('manualBtn').disabled=true;$('switchBtn').disabled=true;const c=$('overlay');c.getContext('2d').clearRect(0,0,c.width,c.height)}
 function resizeCanvas(){const v=$('video'),c=$('overlay');if(v.videoWidth){c.width=v.videoWidth;c.height=v.videoHeight}}
 function captureFrame(){const v=$('video');if(!v.videoWidth)return null;const c=document.createElement('canvas');c.width=v.videoWidth;c.height=v.videoHeight;c.getContext('2d').drawImage(v,0,0,c.width,c.height);return c}
-function preprocess(){const v=$('video'),tmp=document.createElement('canvas');tmp.width=INPUT;tmp.height=INPUT;const ctx=tmp.getContext('2d'),scale=Math.min(INPUT/v.videoWidth,INPUT/v.videoHeight),nw=Math.round(v.videoWidth*scale),nh=Math.round(v.videoHeight*scale),dx=(INPUT-nw)/2,dy=(INPUT-nh)/2;ctx.fillStyle='rgb(114,114,114)';ctx.fillRect(0,0,INPUT,INPUT);ctx.drawImage(v,0,0,v.videoWidth,v.videoHeight,dx,dy,nw,nh);const pix=ctx.getImageData(0,0,INPUT,INPUT).data,arr=new Float32Array(3*INPUT*INPUT),plane=INPUT*INPUT;for(let i=0,p=0;i<pix.length;i+=4,p++){arr[p]=pix[i]/255;arr[plane+p]=pix[i+1]/255;arr[2*plane+p]=pix[i+2]/255}return{tensor:new ort.Tensor('float32',arr,[1,3,INPUT,INPUT]),meta:{scale,dx,dy,w:v.videoWidth,h:v.videoHeight}}}
+function preprocess(region=null){
+  const v=$('video'),tmp=document.createElement('canvas');tmp.width=INPUT;tmp.height=INPUT;
+  const ctx=tmp.getContext('2d');
+  const sx=region?.x||0,sy=region?.y||0,sw=region?.w||v.videoWidth,sh=region?.h||v.videoHeight;
+  const scale=Math.min(INPUT/sw,INPUT/sh),nw=Math.round(sw*scale),nh=Math.round(sh*scale),dx=(INPUT-nw)/2,dy=(INPUT-nh)/2;
+  ctx.fillStyle='rgb(114,114,114)';ctx.fillRect(0,0,INPUT,INPUT);
+  ctx.drawImage(v,sx,sy,sw,sh,dx,dy,nw,nh);
+  const pix=ctx.getImageData(0,0,INPUT,INPUT).data,arr=new Float32Array(3*INPUT*INPUT),plane=INPUT*INPUT;
+  for(let i=0,p=0;i<pix.length;i+=4,p++){arr[p]=pix[i]/255;arr[plane+p]=pix[i+1]/255;arr[2*plane+p]=pix[i+2]/255}
+  return{tensor:new ort.Tensor('float32',arr,[1,3,INPUT,INPUT]),meta:{scale,dx,dy,w:v.videoWidth,h:v.videoHeight,sx,sy,sw,sh}}
+}
 function iou(a,b){const ax2=a.x+a.w,ay2=a.y+a.h,bx2=b.x+b.w,by2=b.y+b.h,ix=Math.max(0,Math.min(ax2,bx2)-Math.max(a.x,b.x)),iy=Math.max(0,Math.min(ay2,by2)-Math.max(a.y,b.y)),inter=ix*iy;return inter/(a.w*a.h+b.w*b.h-inter+1e-6)}
-function postprocess(out,meta){const data=out.data,dims=out.dims;let ch,n;if(dims[1]===17){ch=17;n=dims[2]}else if(dims[2]===17){ch=17;n=dims[1]}else throw new Error('Salida ONNX inesperada: '+dims.join('x'));const candidates=[];for(let i=0;i<n;i++){const get=c=>dims[1]===17?data[c*n+i]:data[i*17+c];let best=-1,cls=-1;for(let c=0;c<LABELS.length;c++){const s=get(4+c);if(s>best){best=s;cls=c}}if(best<SCORE)continue;const cx=get(0),cy=get(1),w=get(2),h=get(3);let x=(cx-w/2-meta.dx)/meta.scale,y=(cy-h/2-meta.dy)/meta.scale,bw=w/meta.scale,bh=h/meta.scale;x=Math.max(0,Math.min(meta.w,x));y=Math.max(0,Math.min(meta.h,y));bw=Math.max(0,Math.min(meta.w-x,bw));bh=Math.max(0,Math.min(meta.h-y,bh));if(bw<2||bh<2)continue;candidates.push({class:LABELS[cls],score:best,x,y,w:bw,h:bh})}candidates.sort((a,b)=>b.score-a.score);const keep=[];for(const d of candidates){if(keep.length>=MAX)break;if(!keep.some(k=>k.class===d.class&&iou(k,d)>IOU))keep.push(d)}return keep}
-function draw(dets){const c=$('overlay'),ctx=c.getContext('2d'),v=$('video');if(v.videoWidth&&c.width!==v.videoWidth)resizeCanvas();ctx.clearRect(0,0,c.width,c.height);ctx.font=`${Math.max(15,Math.round(c.width/38))}px system-ui`;ctx.lineWidth=Math.max(3,c.width/210);for(const d of dets){const bad=!!VIOLATIONS[d.class],good=['Hardhat','Gloves','Goggles','Safety Vest','Mask'].includes(d.class),color=bad?'#ef4444':good?'#22c55e':'#18c7e8',label=(bad?'⚠ ':'')+d.class+' '+Math.round(d.score*100)+'%';ctx.strokeStyle=color;ctx.strokeRect(d.x,d.y,d.w,d.h);const tw=ctx.measureText(label).width+12,th=parseInt(ctx.font)+10;ctx.fillStyle=color;ctx.fillRect(d.x,Math.max(0,d.y-th),tw,th);ctx.fillStyle='#fff';ctx.fillText(label,d.x+6,Math.max(parseInt(ctx.font),d.y-7))}}
+function postprocess(out,meta,scoreThreshold){
+  const data=out.data,dims=out.dims;let ch,n;
+  if(dims[1]===17){ch=17;n=dims[2]}else if(dims[2]===17){ch=17;n=dims[1]}else throw new Error('Salida ONNX inesperada: '+dims.join('x'));
+  const candidates=[];
+  for(let i=0;i<n;i++){
+    const get=c=>dims[1]===17?data[c*n+i]:data[i*17+c];
+    let best=-1,cls=-1;
+    for(let c=0;c<LABELS.length;c++){const s=get(4+c);if(s>best){best=s;cls=c}}
+    if(best<scoreThreshold)continue;
+    const cx=get(0),cy=get(1),w=get(2),h=get(3);
+    let x=(cx-w/2-meta.dx)/meta.scale+meta.sx,y=(cy-h/2-meta.dy)/meta.scale+meta.sy,bw=w/meta.scale,bh=h/meta.scale;
+    x=Math.max(0,Math.min(meta.w,x));y=Math.max(0,Math.min(meta.h,y));
+    bw=Math.max(0,Math.min(meta.w-x,bw));bh=Math.max(0,Math.min(meta.h-y,bh));
+    if(bw<2||bh<2)continue;
+    candidates.push({class:LABELS[cls],score:best,x,y,w:bw,h:bh})
+  }
+  candidates.sort((a,b)=>b.score-a.score);
+  const keep=[];
+  for(const d of candidates){
+    if(keep.length>=MAX)break;
+    if(!keep.some(k=>k.class===d.class&&iou(k,d)>IOU))keep.push(d)
+  }
+  return keep
+}
+function mergeDetections(all){
+  const sorted=[...all].sort((a,b)=>b.score-a.score),keep=[];
+  for(const d of sorted){
+    if(keep.length>=MAX)break;
+    if(!keep.some(k=>k.class===d.class&&iou(k,d)>.5))keep.push(d)
+  }
+  return keep
+}
+function draw(dets){
+  const c=$('overlay'),ctx=c.getContext('2d'),v=$('video');
+  if(v.videoWidth&&c.width!==v.videoWidth)resizeCanvas();
+  ctx.clearRect(0,0,c.width,c.height);
+  ctx.font=`${Math.max(15,Math.round(c.width/38))}px system-ui`;
+  ctx.lineWidth=Math.max(3,c.width/210);
+  for(const d of dets){
+    const bad=!!VIOLATIONS[d.class],good=['Hardhat','Gloves','Goggles','Safety Vest','Mask'].includes(d.class);
+    const color=bad?'#ef4444':good?'#22c55e':'#18c7e8';
+    const label=(bad?'⚠ ':'')+(LABEL_ES[d.class]||d.class)+' '+Math.round(d.score*100)+'%';
+    ctx.strokeStyle=color;ctx.strokeRect(d.x,d.y,d.w,d.h);
+    const tw=ctx.measureText(label).width+12,th=parseInt(ctx.font)+10;
+    ctx.fillStyle=color;ctx.fillRect(d.x,Math.max(0,d.y-th),tw,th);
+    ctx.fillStyle='#fff';ctx.fillText(label,d.x+6,Math.max(parseInt(ctx.font),d.y-7))
+  }
+}
 function violationEnabled(cls){const v=VIOLATIONS[cls];if(!v)return false;if(cls==='Fall-Detected')return true;if(!v.ppe)return true;return $(v.ppe)?.checked===true}
 function riskForViolation(cls){if(cls==='Fall-Detected'||cls==='No_Harness')return RISKS.find(r=>r.id==='height');return RISKS.find(r=>r.id==='ppe')}
-function evaluate(dets){const active=dets.filter(d=>VIOLATIONS[d.class]&&violationEnabled(d.class)),seen=new Set(active.map(d=>d.class));Object.keys(VIOLATIONS).forEach(k=>{streaks[k]=seen.has(k)?(streaks[k]||0)+1:Math.max(0,(streaks[k]||0)-1)});if($('alertBox').classList.contains('show'))return;active.sort((a,b)=>b.score-a.score);for(const d of active){if((streaks[d.class]||0)<2)continue;if(Date.now()-(lastAlertAt[d.class]||0)<12000)continue;lastAlertAt[d.class]=Date.now();streaks[d.class]=0;const meta=VIOLATIONS[d.class],risk=riskForViolation(d.class);currentAlert={det:d,meta,risk};$('alertTitle').textContent='⚠️ '+meta.title;$('alertConf').textContent=Math.round(d.score*100)+'%';$('alertText').textContent=d.class==='Fall-Detected'?'El modelo identificó una configuración compatible con caída o evento de caída. Confirmar inmediatamente la situación real.':'La clase de incumplimiento fue detectada de forma positiva por el modelo SST y se mantuvo en lecturas consecutivas. Confirmar antes de registrar.';$('alertNorm').textContent='Referencia: '+normFor(risk);$('alertBox').classList.add('show');break}}
-async function infer(){const prep=preprocess(),feeds={};feeds[session.inputNames[0]]=prep.tensor;const outputs=await session.run(feeds),tensor=outputs[session.outputNames[0]];return postprocess(tensor,prep.meta)}
-async function loop(){if(!running)return;if(!busy){busy=true;try{const dets=await infer();$('detStatus').textContent=dets.length+' det.';draw(dets);evaluate(dets)}catch(e){console.error(e);$('modelInfo').className='status warn';$('modelInfo').textContent='Error de inferencia: '+e.message}finally{busy=false}}if(running)setTimeout(()=>requestAnimationFrame(loop),850)}
+function evaluate(dets){
+  const cfg=sensitivityCfg();
+  const active=dets.filter(d=>VIOLATIONS[d.class]&&violationEnabled(d.class)),
+        seen=new Set(active.map(d=>d.class));
+  Object.keys(VIOLATIONS).forEach(k=>{streaks[k]=seen.has(k)?(streaks[k]||0)+1:Math.max(0,(streaks[k]||0)-1)});
+  if($('alertBox').classList.contains('show'))return;
+  active.sort((a,b)=>b.score-a.score);
+  for(const d of active){
+    if((streaks[d.class]||0)<cfg.streak)continue;
+    if(Date.now()-(lastAlertAt[d.class]||0)<cfg.cooldown)continue;
+    lastAlertAt[d.class]=Date.now();streaks[d.class]=0;
+    const meta=VIOLATIONS[d.class],risk=riskForViolation(d.class);
+    currentAlert={det:d,meta,risk};
+    $('alertTitle').textContent='⚠️ '+meta.title;
+    $('alertConf').textContent=Math.round(d.score*100)+'%';
+    $('alertText').textContent=d.class==='Fall-Detected'
+      ?'El modelo identificó una configuración compatible con caída o evento de caída. Confirmar inmediatamente la situación real.'
+      :'La IA detectó '+(LABEL_ES[d.class]||d.class)+' con sensibilidad '+($('sensitivityMode').value==='max'?'máxima':$('sensitivityMode').value==='high'?'alta':'equilibrada')+'. Confirmar antes de registrar.';
+    $('alertNorm').textContent='Referencia: '+normFor(risk);
+    $('alertBox').classList.add('show');break
+  }
+}
+async function inferRegion(region=null){
+  const prep=preprocess(region),feeds={};feeds[session.inputNames[0]]=prep.tensor;
+  const outputs=await session.run(feeds),tensor=outputs[session.outputNames[0]];
+  return postprocess(tensor,prep.meta,sensitivityCfg().score)
+}
+async function infer(){
+  const v=$('video');
+  const full=await inferRegion(null);
+  const cfg=sensitivityCfg();
+  if(!cfg.tiles || $('detailScan')?.value==='off' || !v.videoWidth)return full;
+
+  // Barrido de detalle: analiza una zona ampliada por ciclo.
+  // Esto mejora la sensibilidad para EPP/personas pequeñas sin hacer 5 inferencias en cada frame.
+  const W=v.videoWidth,H=v.videoHeight,tw=W*.64,th=H*.64;
+  const tiles=[
+    {x:0,y:0,w:tw,h:th},
+    {x:W-tw,y:0,w:tw,h:th},
+    {x:0,y:H-th,w:tw,h:th},
+    {x:W-tw,y:H-th,w:tw,h:th}
+  ];
+  const region=tiles[tileIndex%tiles.length];tileIndex++;
+  const detail=await inferRegion(region);
+  return mergeDetections(full.concat(detail))
+}
+async function loop(){
+  if(!running)return;
+  if(!busy){
+    busy=true;
+    try{
+      const dets=await infer();
+      $('detStatus').textContent=dets.length+' det.';
+      draw(dets);evaluate(dets)
+    }catch(e){
+      console.error(e);$('modelInfo').className='status warn';$('modelInfo').textContent='Error de inferencia: '+e.message
+    }finally{busy=false}
+  }
+  if(running)setTimeout(()=>requestAnimationFrame(loop),sensitivityCfg().delay)
+}
 function openRisk(id,withCapture=false){const r=RISKS.find(x=>x.id===id);if(!r)return;pendingRisk=r;manualMode=true;if(withCapture){const c=captureFrame();if(c)lastCapture=c.toDataURL('image/jpeg',.78)}$('mTitle').textContent='Registrar: '+r.title;$('mCategory').value=r.category;$('mType').value=r.type;$('mFinding').value=r.title;$('mNotes').value='';$('mAction').value=r.action;$('mNormEdit').value=normFor(r);$('mNorm').textContent='Verificación preventiva guiada. La norma se puede editar antes de guardar.';$('modal').classList.add('show')}
 function openManual(){const c=captureFrame();if(c)lastCapture=c.toDataURL('image/jpeg',.78);pendingRisk=RISKS[0];manualMode=true;$('mTitle').textContent='Registrar evidencia manual';$('mCategory').value='Otro / definir';$('mType').value='Condición insegura';$('mFinding').value='';$('mNotes').value='';$('mAction').value='Controlar el riesgo identificado siguiendo la jerarquía de controles.';$('mNormEdit').value='Validar normativa específica aplicable.';$('mNorm').textContent='Completá el hallazgo observado. La imagen ya quedó capturada.';$('modal').classList.add('show')}
-function openAlert(){if(!currentAlert)return;const c=captureFrame();if(c)lastCapture=c.toDataURL('image/jpeg',.78);const{det,meta,risk}=currentAlert;pendingRisk=risk;manualMode=false;$('mTitle').textContent=meta.title;$('mCategory').value=meta.category;$('mType').value=meta.type;$('mFinding').value=meta.title;$('mNotes').value=`Detección IA: ${det.class} con ${Math.round(det.score*100)}% de confianza, confirmada por el inspector.`;$('mAction').value=risk.action;$('mNormEdit').value=normFor(risk);$('mNorm').textContent='Alerta automática SST. Confirmá o ajustá antes de guardar.';$('modal').classList.add('show');$('alertBox').classList.remove('show')}
+function openAlert(){if(!currentAlert)return;const c=captureFrame();if(c)lastCapture=c.toDataURL('image/jpeg',.78);const{det,meta,risk}=currentAlert;pendingRisk=risk;manualMode=false;$('mTitle').textContent=meta.title;$('mCategory').value=meta.category;$('mType').value=meta.type;$('mFinding').value=meta.title;$('mNotes').value=`Detección IA: ${LABEL_ES[det.class]||det.class} con ${Math.round(det.score*100)}% de confianza, confirmada por el inspector.`;$('mAction').value=risk.action;$('mNormEdit').value=normFor(risk);$('mNorm').textContent='Alerta automática SST. Confirmá o ajustá antes de guardar.';$('modal').classList.add('show');$('alertBox').classList.remove('show')}
 function saveFinding(){const f={id:crypto.randomUUID?crypto.randomUUID():String(Date.now()),title:$('mFinding').value.trim()||'Hallazgo SST',category:$('mCategory').value,type:$('mType').value,severity:manualMode?'Alto':currentAlert?.meta?.severity||'Alto',source:manualMode?'Inspección guiada/manual':'IA especializada',confidence:manualMode?null:currentAlert?.det?.score??null,sector:$('mSector').value.trim(),notes:$('mNotes').value.trim(),action:$('mAction').value.trim(),norm:$('mNormEdit').value.trim(),time:new Date().toISOString(),image:lastCapture};findings.unshift(f);persist();renderFindings();$('modal').classList.remove('show');currentAlert=null;manualMode=false;lastCapture=null}
-function report(){if(!findings.length){alert('No hay hallazgos registrados.');return}const auto=findings.filter(f=>f.source==='IA especializada').length,rows=findings.map((f,i)=>`<article class="finding"><div class="fh"><div><small>HALLAZGO ${i+1}</small><h2>${esc(f.title)}</h2><div class="muted">${esc(f.category)} · ${esc(f.sector||'Sector no indicado')} · ${new Date(f.time).toLocaleString('es-AR')}</div></div><b>${esc(f.severity)}</b></div>${f.image?`<img src="${f.image}">`:''}<table><tr><th>Tipo</th><td>${esc(f.type)}</td></tr><tr><th>Origen</th><td>${esc(f.source)}</td></tr>${f.confidence!=null?`<tr><th>Confianza IA</th><td>${Math.round(f.confidence*100)}%</td></tr>`:''}<tr><th>Observación</th><td>${esc(f.notes)}</td></tr><tr><th>Normativa relacionada</th><td>${esc(f.norm)}</td></tr><tr><th>Acción recomendada</th><td>${esc(f.action)}</td></tr></table></article>`).join('');const w=window.open('','_blank');if(!w){alert('Permití ventanas emergentes.');return}w.document.write(`<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>Informe SST IA V4</title><style>body{margin:0;background:#eef3f7;font-family:Arial;color:#17212b}.bar{position:sticky;top:0;background:#0b1d33;padding:10px;text-align:center}.bar button{padding:11px 18px;border:0;border-radius:9px;font-weight:700}.page{max-width:900px;margin:18px auto;background:#fff;padding:32px}.head{border-bottom:4px solid #1769aa;padding-bottom:14px}.head h1{margin:3px 0;color:#0b1d33}.summary{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:18px 0}.metric{border:1px solid #d9e2ec;border-radius:12px;padding:12px}.metric strong{font-size:25px;display:block}.finding{border:1px solid #d9e2ec;border-radius:14px;padding:16px;margin:0 0 16px;break-inside:avoid}.fh{display:flex;justify-content:space-between;gap:15px}.fh h2{font-size:18px;margin:3px 0;color:#0b1d33}.fh b{background:#fee4e2;color:#b42318;padding:7px 10px;border-radius:999px;height:max-content;font-size:11px}.muted{font-size:11px;color:#607080}img{width:100%;max-height:390px;object-fit:contain;background:#f7f9fb;border-radius:10px;margin:13px 0}table{width:100%;border-collapse:collapse;font-size:12px}th,td{padding:8px;border-top:1px solid #d9e2ec;text-align:left;vertical-align:top}th{width:190px}.note{font-size:10px;color:#607080;line-height:1.5;border-top:1px solid #d9e2ec;padding-top:10px;margin-top:20px}@media(max-width:650px){.page{margin:0;padding:18px}.summary{grid-template-columns:1fr}}@media print{.bar{display:none}.page{margin:0;max-width:none}}</style></head><body><div class="bar"><button onclick="window.print()">Imprimir / Guardar como PDF</button></div><main class="page"><div class="head"><small>INSPECCIÓN PREVENTIVA ASISTIDA POR IA</small><h1>Informe de Seguridad e Higiene</h1><div>${new Date().toLocaleString('es-AR')} · SST IA V4</div></div><div class="summary"><div class="metric"><strong>${findings.length}</strong><span>Hallazgos</span></div><div class="metric"><strong>${auto}</strong><span>Desde IA</span></div><div class="metric"><strong>${discarded}</strong><span>Alertas descartadas</span></div></div>${rows}<div class="note"><b>Alcance:</b> herramienta preventiva de apoyo. Las detecciones automáticas y verificaciones guiadas requieren validación profesional y no sustituyen mediciones, documentación, capacitación ni evaluación normativa específica.</div></main></body></html>`);w.document.close()}
+function report(){if(!findings.length){alert('No hay hallazgos registrados.');return}const auto=findings.filter(f=>f.source==='IA especializada').length,rows=findings.map((f,i)=>`<article class="finding"><div class="fh"><div><small>HALLAZGO ${i+1}</small><h2>${esc(f.title)}</h2><div class="muted">${esc(f.category)} · ${esc(f.sector||'Sector no indicado')} · ${new Date(f.time).toLocaleString('es-AR')}</div></div><b>${esc(f.severity)}</b></div>${f.image?`<img src="${f.image}">`:''}<table><tr><th>Tipo</th><td>${esc(f.type)}</td></tr><tr><th>Origen</th><td>${esc(f.source)}</td></tr>${f.confidence!=null?`<tr><th>Confianza IA</th><td>${Math.round(f.confidence*100)}%</td></tr>`:''}<tr><th>Observación</th><td>${esc(f.notes)}</td></tr><tr><th>Normativa relacionada</th><td>${esc(f.norm)}</td></tr><tr><th>Acción recomendada</th><td>${esc(f.action)}</td></tr></table></article>`).join('');const w=window.open('','_blank');if(!w){alert('Permití ventanas emergentes.');return}w.document.write(`<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>Informe SST IA V4.1</title><style>body{margin:0;background:#eef3f7;font-family:Arial;color:#17212b}.bar{position:sticky;top:0;background:#0b1d33;padding:10px;text-align:center}.bar button{padding:11px 18px;border:0;border-radius:9px;font-weight:700}.page{max-width:900px;margin:18px auto;background:#fff;padding:32px}.head{border-bottom:4px solid #1769aa;padding-bottom:14px}.head h1{margin:3px 0;color:#0b1d33}.summary{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:18px 0}.metric{border:1px solid #d9e2ec;border-radius:12px;padding:12px}.metric strong{font-size:25px;display:block}.finding{border:1px solid #d9e2ec;border-radius:14px;padding:16px;margin:0 0 16px;break-inside:avoid}.fh{display:flex;justify-content:space-between;gap:15px}.fh h2{font-size:18px;margin:3px 0;color:#0b1d33}.fh b{background:#fee4e2;color:#b42318;padding:7px 10px;border-radius:999px;height:max-content;font-size:11px}.muted{font-size:11px;color:#607080}img{width:100%;max-height:390px;object-fit:contain;background:#f7f9fb;border-radius:10px;margin:13px 0}table{width:100%;border-collapse:collapse;font-size:12px}th,td{padding:8px;border-top:1px solid #d9e2ec;text-align:left;vertical-align:top}th{width:190px}.note{font-size:10px;color:#607080;line-height:1.5;border-top:1px solid #d9e2ec;padding-top:10px;margin-top:20px}@media(max-width:650px){.page{margin:0;padding:18px}.summary{grid-template-columns:1fr}}@media print{.bar{display:none}.page{margin:0;max-width:none}}</style></head><body><div class="bar"><button onclick="window.print()">Imprimir / Guardar como PDF</button></div><main class="page"><div class="head"><small>INSPECCIÓN PREVENTIVA ASISTIDA POR IA</small><h1>Informe de Seguridad e Higiene</h1><div>${new Date().toLocaleString('es-AR')} · SST IA V4.1</div></div><div class="summary"><div class="metric"><strong>${findings.length}</strong><span>Hallazgos</span></div><div class="metric"><strong>${auto}</strong><span>Desde IA</span></div><div class="metric"><strong>${discarded}</strong><span>Alertas descartadas</span></div></div>${rows}<div class="note"><b>Alcance:</b> herramienta preventiva de apoyo. Las detecciones automáticas y verificaciones guiadas requieren validación profesional y no sustituyen mediciones, documentación, capacitación ni evaluación normativa específica.</div></main></body></html>`);w.document.close()}
+function updateSensitivityInfo(){
+  const mode=$('sensitivityMode').value,cfg=sensitivityCfg();
+  const txt=mode==='max'
+    ?`Máxima sensibilidad: umbral ${Math.round(cfg.score*100)}%, alerta con ${cfg.streak} lectura y barrido ampliado. Puede aumentar falsos positivos.`
+    :mode==='high'
+      ?`Alta sensibilidad: umbral ${Math.round(cfg.score*100)}%, alerta rápida y barrido ampliado.`
+      :`Equilibrada: umbral ${Math.round(cfg.score*100)}%, exige ${cfg.streak} lecturas y prioriza menos falsos positivos.`;
+  $('sensitivityInfo').textContent=txt;
+  streaks={};lastAlertAt={};
+}
+$('sensitivityMode').onchange=updateSensitivityInfo;
+$('detailScan').onchange=()=>{tileIndex=0};
+updateSensitivityInfo();
 $('activityProfile').onchange=()=>{if($('activityProfile').value==='construction')$('legalProfile').value='construction';renderRisks()};$('legalProfile').onchange=renderRisks;$('startBtn').onclick=startCamera;$('stopBtn').onclick=stopCamera;$('manualBtn').onclick=openManual;$('switchBtn').onclick=async()=>{facing=facing==='environment'?'user':'environment';await startCamera()};$('dismissAlert').onclick=()=>{discarded++;persist();renderFindings();$('alertBox').classList.remove('show');currentAlert=null};$('confirmAlert').onclick=openAlert;$('cancelModal').onclick=()=>{$('modal').classList.remove('show');currentAlert=null;manualMode=false};$('saveFinding').onclick=saveFinding;$('modal').onclick=e=>{if(e.target===$('modal'))$('modal').classList.remove('show')};$('reportBtn').onclick=report;$('clearBtn').onclick=()=>{if(confirm('¿Borrar todos los hallazgos?')){findings=[];discarded=0;persist();renderFindings()}};window.addEventListener('resize',resizeCanvas);renderRisks();renderFindings();
