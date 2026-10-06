@@ -1,57 +1,33 @@
-SST IA V4.4 — CORRECCIÓN DE CONTADOR + INICIO RÁPIDO
+SST IA V4.5 — VERSIÓN ESTABLE
 
-CORRECCIONES
-1. Contador del desplegable
-- Cada checkbox actualiza inmediatamente:
-  - contador total de ítems,
-  - contador por categoría,
-  - resumen de seleccionados,
-  - módulos activos.
-- Se usa delegación de eventos para que funcione de forma robusta con los 78 ítems.
-- La selección queda guardada localmente.
+Correcciones verificadas:
+1. Se corrigió una etiqueta HTML mal formada en poseStatus.
+2. Se restauraron los controles de Sensibilidad y Barrido de detalle que el JavaScript todavía esperaba.
+3. Se protegieron referencias a controles opcionales para evitar que un elemento faltante detenga toda la aplicación.
+4. El contador de selección fue probado:
+   - 0 ítems -> marcar “Tablero / gabinete abierto” -> 1 ítem.
+   - marcar otro ítem eléctrico -> 2 ítems.
+   - el contador de la categoría también cambia.
+5. El botón “Iniciar inspección” tiene el evento correctamente enlazado.
+6. La cámara se solicita primero; la IA se carga después.
+7. Si solo se seleccionan controles guiados, no es necesario cargar el modelo SST pesado.
+8. Si ocurre un error JavaScript, se muestra en el recuadro de estado en vez de quedar aparentemente congelado.
 
-2. Cámara
-ANTES:
-  botón -> cargar modelo SST (~43 MB) -> abrir cámara.
-Eso hacía que en iPhone pareciera que el botón no respondía.
-
-AHORA:
-  botón -> abrir cámara INMEDIATAMENTE -> cargar IA después.
-- La cámara puede usarse aunque el modelo todavía esté cargando.
-- Si la inspección seleccionada solo tiene ítems guiados, NO descarga el modelo SST pesado.
-- Si seleccionás ergonomía, carga el motor postural.
-- Si seleccionás EPP automático/caídas, carga SafetyVision.
-- El estado se informa en pantalla: Cámara activa / IA cargando / IA activa.
-
-3. Rendimiento
-- El modelo multi-EPP solo se carga cuando realmente hay una clase automática seleccionada.
-- Esto mejora mucho el inicio de inspecciones eléctricas, incendio, almacenamiento, etc., que hoy son guiadas.
-
-PRUEBA RECOMENDADA
-A. Contador:
-- Abrir “Qué evaluar”.
-- Marcar 3 ítems.
-- Debe decir “3 ítems” arriba instantáneamente.
-- Desmarcar uno -> debe quedar “2 ítems”.
-
-B. Cámara sin modelo pesado:
-- Elegir Ninguno.
-- Marcar solamente “Tablero / gabinete abierto”.
-- Iniciar inspección.
-- La cámara debería aparecer casi inmediatamente.
-- Debe decir que la IA SST no es requerida.
-
-C. Cámara con IA:
-- Marcar Casco.
-- Iniciar inspección.
-- La cámara aparece primero.
-- Luego aparece “Cargando IA SST (~43 MB)”.
-- Cuando termina: “IA SST: activa”.
-
-ACTUALIZAR GITHUB
-Reemplazar:
+ACTUALIZACIÓN
+Reemplazar en GitHub:
 - index.html
 - app.js
 
+No modificar GitHub Pages.
+
 Abrir:
-https://rosariosafety-eng.github.io/sst-ia/?v=44
+https://rosariosafety-eng.github.io/sst-ia/?v=45
+
+PRUEBA
+1. Abrir “Qué evaluar”.
+2. Marcar “Tablero / gabinete abierto”.
+3. El contador debe mostrar 1 ítem.
+4. Marcar “Partes activas accesibles”.
+5. Debe mostrar 2 ítems.
+6. Tocar “Iniciar inspección”.
+7. iPhone debe solicitar/usar cámara inmediatamente.
