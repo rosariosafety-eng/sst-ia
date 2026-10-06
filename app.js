@@ -92,11 +92,11 @@ function updateEvalUI(){
    const n=ids.filter(x=>x.checked).length;
    const c=cat.querySelector(".eval-cat-count");if(c)c.textContent=n+" seleccionados";
  });
- try{localStorage.setItem("sst_v43_selection",JSON.stringify(selected.map(x=>x.id)))}catch(e){}
+ try{localStorage.setItem("sst_v44_selection",JSON.stringify(selected.map(x=>x.id)))}catch(e){}
 }
 function restoreEvalSelection(){
  try{
-   const ids=JSON.parse(localStorage.getItem("sst_v43_selection")||"null");
+   const ids=JSON.parse((localStorage.getItem("sst_v44_selection")||localStorage.getItem("sst_v43_selection"))||"null");
    if(Array.isArray(ids)){document.querySelectorAll(".eval-check").forEach(x=>x.checked=ids.includes(x.id));syncPPEFromEval();updateEvalUI();return true}
  }catch(e){}
  return false
@@ -128,9 +128,97 @@ function updatePoseVisibility(){const a=ergonomicSelected();$("poseStatus").styl
 if(poseStreak>=2&&!$('alertBox').classList.contains('show')&&allowed.length){currentPoseAlert=allowed[0];currentAlert=null;$('alertTitle').textContent='⚠️ Posible postura ergonómica desfavorable';$('alertConf').textContent='SCREENING';$('alertText').textContent=text+'. La cámara no conoce peso, frecuencia, duración ni fuerza aplicada.';$('alertNorm').textContent='Referencia: Resolución SRT 886/2015 y Resolución MTEySS 295/2003, Anexo I.';$('alertBox').classList.add('show');poseStreak=0}}catch(e){console.error(e)}finally{poseBusy=false}}
 function renderRisks(){const p=$('activityProfile').value,list=RISKS.filter(r=>(r.profiles.includes(p)||p==='general')&&riskEnabled(r));$('riskGrid').innerHTML=list.map(r=>`<div class="risk-card"><div class="risk-head"><div class="risk-name"><div class="risk-icon">${r.icon}</div><div><strong>${r.title}</strong><small>${r.signals}</small></div></div><span class="mode ${r.auto?'auto':'guided'}">${r.auto?'IA + validación':'GUIADA'}</span></div><div class="risk-actions"><button class="mini" data-risk="${r.id}">Registrar hallazgo</button></div></div>`).join('');document.querySelectorAll('[data-risk]').forEach(b=>b.onclick=()=>openRisk(b.dataset.risk,true))}
 function renderFindings(){$('totalCount').textContent=findings.length;$('autoCount').textContent=findings.filter(f=>f.source==='IA especializada').length;$('discardCount').textContent=discarded;$('findings').innerHTML=findings.length?findings.map(f=>`<div class="finding"><div class="finding-top"><div><h3>${esc(f.title)}</h3><p>${esc(f.category)} · ${esc(f.sector||'Sector no indicado')} · ${new Date(f.time).toLocaleString('es-AR')}</p></div><span class="tag">${esc(f.severity||'Alto')}</span></div><p><b>${esc(f.type)}</b> · ${esc(f.source)}</p>${f.confidence!=null?`<p>Confianza IA: ${Math.round(f.confidence*100)}%</p>`:''}<p>${esc(f.notes||'Sin observación adicional.')}</p><p><b>Normativa:</b> ${esc(f.norm)}</p><p><b>Acción:</b> ${esc(f.action)}</p>${f.image?`<img class="thumb" src="${f.image}">`:''}</div>`).join(''):'<div class="status">Todavía no hay hallazgos registrados.</div>'}
+
+function selectedAutomaticChecks(){
+  const autoIds=["evalHardhat","evalVest","evalGoggles","evalGloves","evalMask","evalHarness"];
+  return autoIds.filter(isEvalOn);
+}
+function needsSSTModel(){
+  return selectedAutomaticChecks().length>0;
+}
+function needsPoseModel(){
+  return typeof ergonomicSelected==="function" ? ergonomicSelected() : false;
+}
+function refreshSelectionState(){
+  syncPPEFromEval();
+  if(typeof updateEvalUI==="function")updateEvalUI();
+  renderRisks();
+  updatePoseVisibility();
+  if(running)ensureSelectedEngines();
+}
+async function ensureSelectedEngines(){
+  if(needsPoseModel()) loadPoseDetector();
+
+  if(!needsSSTModel()){
+    $("modelStatus").textContent="IA SST: no requerida";
+    $("modelInfo").className="status camera-ready";
+    $("modelInfo").textContent="Cámara activa. La selección actual usa controles guiados/posturales y no requiere descargar el modelo multi-EPP.";
+    return;
+  }
+
+  if(session){
+    $("modelStatus").textContent="IA SST: activa";
+    if(running && !window.__sstLoopStarted){
+      window.__sstLoopStarted=true;
+      loop();
+    }
+    return;
+  }
+
+  $("modelStatus").textContent="IA SST: cargando…";
+  $("modelInfo").className="status";
+  $("modelInfo").innerHTML='<span class="loading-line"><span class="spinner"></span><span>Cámara activa. Cargando IA SST (~43 MB)… Podés seguir encuadrando mientras tanto.</span></span>';
+
+  const ok=await loadModel();
+  if(ok && running && !window.__sstLoopStarted){
+    window.__sstLoopStarted=true;
+    loop();
+  }
+}
+
 async function loadModel(){if(session)return true;try{$('modelStatus').textContent='IA SST: descargando…';$('modelInfo').className='status';$('modelInfo').textContent='Descargando SafetyVision v2 (~43 MB). En celular puede tardar en la primera carga.';ort.env.wasm.wasmPaths='https://cdn.jsdelivr.net/npm/onnxruntime-web@1.22.0/dist/';ort.env.wasm.numThreads=1;session=await ort.InferenceSession.create(MODEL_URL,{executionProviders:['wasm'],graphOptimizationLevel:'all'});$('modelStatus').textContent='IA SST: activa';$('modelInfo').className='status good';$('modelInfo').textContent='Motor SST cargado: EPP, arnés y detección de caída. El resto de riesgos se inspecciona de forma guiada.';return true}catch(e){console.error(e);$('modelStatus').textContent='IA SST: error';$('modelInfo').className='status warn';$('modelInfo').textContent='No se pudo cargar el modelo SST. Verificá conexión y recargá. '+e.message;return false}}
-async function startCamera(){try{stopCamera();if(!await loadModel())return;stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:facing},width:{ideal:1280},height:{ideal:720}},audio:false});$('video').srcObject=stream;await $('video').play();$('placeholder').style.display='none';$('onlinePill').textContent='● cámara activa';$('onlinePill').classList.add('on');$('startBtn').disabled=true;$('stopBtn').disabled=false;$('manualBtn').disabled=false;$('switchBtn').disabled=false;running=true;resizeCanvas();await loadPoseDetector();loop()}catch(e){$('modelInfo').className='status warn';$('modelInfo').textContent='No se pudo iniciar la cámara: '+e.message}}
-function stopCamera(){running=false;busy=false;if(stream){stream.getTracks().forEach(t=>t.stop());stream=null}$('video').srcObject=null;$('placeholder').style.display='grid';$('onlinePill').textContent='● cámara inactiva';$('onlinePill').classList.remove('on');$('startBtn').disabled=false;$('stopBtn').disabled=true;$('manualBtn').disabled=true;$('switchBtn').disabled=true;const c=$('overlay');c.getContext('2d').clearRect(0,0,c.width,c.height)}
+async function startCamera(){
+  try{
+    stopCamera();
+    $("startBtn").disabled=true;
+    $("startBtn").textContent="Abriendo cámara…";
+    $("modelInfo").className="status";
+    $("modelInfo").textContent="Solicitando acceso a la cámara…";
+
+    stream=await navigator.mediaDevices.getUserMedia({
+      video:{facingMode:{ideal:facing},width:{ideal:1280},height:{ideal:720}},
+      audio:false
+    });
+
+    $("video").srcObject=stream;
+    await $("video").play();
+
+    $("placeholder").style.display="none";
+    $("onlinePill").textContent="● cámara activa";
+    $("onlinePill").classList.add("on");
+    $("startBtn").textContent="Inspección activa";
+    $("startBtn").disabled=true;
+    $("stopBtn").disabled=false;
+    $("manualBtn").disabled=false;
+    $("switchBtn").disabled=false;
+    $("modelInfo").className="status camera-ready";
+    $("modelInfo").textContent="Cámara activa. Preparando los módulos seleccionados…";
+
+    running=true;
+    busy=false;
+    window.__sstLoopStarted=false;
+    resizeCanvas();
+
+    // Cámara ya visible. Los modelos se cargan después, según selección.
+    ensureSelectedEngines();
+  }catch(e){
+    $("startBtn").disabled=false;
+    $("startBtn").textContent="Iniciar inspección";
+    $("modelInfo").className="status warn";
+    $("modelInfo").textContent="No se pudo iniciar la cámara: "+e.message;
+  }
+}
+function stopCamera(){running=false;busy=false;window.__sstLoopStarted=false;if(stream){stream.getTracks().forEach(t=>t.stop());stream=null}$('video').srcObject=null;$('placeholder').style.display='grid';$('onlinePill').textContent='● cámara inactiva';$('onlinePill').classList.remove('on');$('startBtn').disabled=false;$('startBtn').textContent='Iniciar inspección';$('stopBtn').disabled=true;$('manualBtn').disabled=true;$('switchBtn').disabled=true;const c=$('overlay');c.getContext('2d').clearRect(0,0,c.width,c.height)}
 function resizeCanvas(){const v=$('video'),c=$('overlay');if(v.videoWidth){c.width=v.videoWidth;c.height=v.videoHeight}}
 function captureFrame(){const v=$('video');if(!v.videoWidth)return null;const c=document.createElement('canvas');c.width=v.videoWidth;c.height=v.videoHeight;c.getContext('2d').drawImage(v,0,0,c.width,c.height);return c}
 function preprocess(region=null){
@@ -243,15 +331,34 @@ async function infer(){
   return mergeDetections(full.concat(detail))
 }
 async function loop(){
-  if(!running)return;
+  if(!running){window.__sstLoopStarted=false;return}
+
+  if(!needsSSTModel()){
+    $("detStatus").textContent="guiada";
+    const c=$("overlay");c.getContext("2d").clearRect(0,0,c.width,c.height);
+    if(needsPoseModel())analyzePoseFrame();
+    setTimeout(()=>requestAnimationFrame(loop),700);
+    return;
+  }
+
+  if(!session){
+    $("detStatus").textContent="IA cargando";
+    setTimeout(()=>requestAnimationFrame(loop),700);
+    return;
+  }
+
   if(!busy){
     busy=true;
     try{
       const dets=await infer();
-      $('detStatus').textContent=dets.length+' det.';
-      draw(dets);evaluate(dets);if(ergonomicSelected())analyzePoseFrame()
+      $("detStatus").textContent=dets.length+" det.";
+      draw(dets);
+      evaluate(dets);
+      if(needsPoseModel())analyzePoseFrame();
     }catch(e){
-      console.error(e);$('modelInfo').className='status warn';$('modelInfo').textContent='Error de inferencia: '+e.message
+      console.error(e);
+      $("modelInfo").className="status warn";
+      $("modelInfo").textContent="Error de inferencia: "+e.message;
     }finally{busy=false}
   }
   if(running)setTimeout(()=>requestAnimationFrame(loop),sensitivityCfg().delay)
@@ -260,7 +367,7 @@ function openRisk(id,withCapture=false){const r=RISKS.find(x=>x.id===id);if(!r)r
 function openManual(){const c=captureFrame();if(c)lastCapture=c.toDataURL('image/jpeg',.78);pendingRisk=RISKS[0];manualMode=true;$('mTitle').textContent='Registrar evidencia manual';$('mCategory').value='Otro / definir';$('mType').value='Condición insegura';$('mFinding').value='';$('mNotes').value='';$('mAction').value='Controlar el riesgo identificado siguiendo la jerarquía de controles.';$('mNormEdit').value='Validar normativa específica aplicable.';$('mNorm').textContent='Completá el hallazgo observado. La imagen ya quedó capturada.';$('modal').classList.add('show')}
 function openAlert(){if(!currentAlert)return;const c=captureFrame();if(c)lastCapture=c.toDataURL('image/jpeg',.78);const{det,meta,risk}=currentAlert;pendingRisk=risk;manualMode=false;$('mTitle').textContent=meta.title;$('mCategory').value=meta.category;$('mType').value=meta.type;$('mFinding').value=meta.title;$('mNotes').value=`Detección IA: ${LABEL_ES[det.class]||det.class} con ${Math.round(det.score*100)}% de confianza, confirmada por el inspector.`;$('mAction').value=risk.action;$('mNormEdit').value=normFor(risk);$('mNorm').textContent='Alerta automática SST. Confirmá o ajustá antes de guardar.';$('modal').classList.add('show');$('alertBox').classList.remove('show')}
 function saveFinding(){const f={id:crypto.randomUUID?crypto.randomUUID():String(Date.now()),title:$('mFinding').value.trim()||'Hallazgo SST',category:$('mCategory').value,type:$('mType').value,severity:manualMode?'Alto':currentAlert?.meta?.severity||'Alto',source:manualMode?'Inspección guiada/manual':'IA especializada',confidence:manualMode?null:currentAlert?.det?.score??null,sector:$('mSector').value.trim(),notes:$('mNotes').value.trim(),action:$('mAction').value.trim(),norm:$('mNormEdit').value.trim(),time:new Date().toISOString(),image:lastCapture};findings.unshift(f);persist();renderFindings();$('modal').classList.remove('show');currentAlert=null;manualMode=false;lastCapture=null}
-function report(){if(!findings.length){alert('No hay hallazgos registrados.');return}const auto=findings.filter(f=>f.source==='IA especializada').length,rows=findings.map((f,i)=>`<article class="finding"><div class="fh"><div><small>HALLAZGO ${i+1}</small><h2>${esc(f.title)}</h2><div class="muted">${esc(f.category)} · ${esc(f.sector||'Sector no indicado')} · ${new Date(f.time).toLocaleString('es-AR')}</div></div><b>${esc(f.severity)}</b></div>${f.image?`<img src="${f.image}">`:''}<table><tr><th>Tipo</th><td>${esc(f.type)}</td></tr><tr><th>Origen</th><td>${esc(f.source)}</td></tr>${f.confidence!=null?`<tr><th>Confianza IA</th><td>${Math.round(f.confidence*100)}%</td></tr>`:''}<tr><th>Observación</th><td>${esc(f.notes)}</td></tr><tr><th>Normativa relacionada</th><td>${esc(f.norm)}</td></tr><tr><th>Acción recomendada</th><td>${esc(f.action)}</td></tr></table></article>`).join('');const w=window.open('','_blank');if(!w){alert('Permití ventanas emergentes.');return}w.document.write(`<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>Informe SST IA V4.3</title><style>body{margin:0;background:#eef3f7;font-family:Arial;color:#17212b}.bar{position:sticky;top:0;background:#0b1d33;padding:10px;text-align:center}.bar button{padding:11px 18px;border:0;border-radius:9px;font-weight:700}.page{max-width:900px;margin:18px auto;background:#fff;padding:32px}.head{border-bottom:4px solid #1769aa;padding-bottom:14px}.head h1{margin:3px 0;color:#0b1d33}.summary{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:18px 0}.metric{border:1px solid #d9e2ec;border-radius:12px;padding:12px}.metric strong{font-size:25px;display:block}.finding{border:1px solid #d9e2ec;border-radius:14px;padding:16px;margin:0 0 16px;break-inside:avoid}.fh{display:flex;justify-content:space-between;gap:15px}.fh h2{font-size:18px;margin:3px 0;color:#0b1d33}.fh b{background:#fee4e2;color:#b42318;padding:7px 10px;border-radius:999px;height:max-content;font-size:11px}.muted{font-size:11px;color:#607080}img{width:100%;max-height:390px;object-fit:contain;background:#f7f9fb;border-radius:10px;margin:13px 0}table{width:100%;border-collapse:collapse;font-size:12px}th,td{padding:8px;border-top:1px solid #d9e2ec;text-align:left;vertical-align:top}th{width:190px}.note{font-size:10px;color:#607080;line-height:1.5;border-top:1px solid #d9e2ec;padding-top:10px;margin-top:20px}@media(max-width:650px){.page{margin:0;padding:18px}.summary{grid-template-columns:1fr}}@media print{.bar{display:none}.page{margin:0;max-width:none}}</style></head><body><div class="bar"><button onclick="window.print()">Imprimir / Guardar como PDF</button></div><main class="page"><div class="head"><small>INSPECCIÓN PREVENTIVA ASISTIDA POR IA</small><h1>Informe de Seguridad e Higiene</h1><div>${new Date().toLocaleString('es-AR')} · SST IA V4.3</div></div><div class="summary"><div class="metric"><strong>${findings.length}</strong><span>Hallazgos</span></div><div class="metric"><strong>${auto}</strong><span>Desde IA</span></div><div class="metric"><strong>${discarded}</strong><span>Alertas descartadas</span></div></div>${rows}<div class="note"><b>Alcance:</b> herramienta preventiva de apoyo. Las detecciones automáticas y verificaciones guiadas requieren validación profesional y no sustituyen mediciones, documentación, capacitación ni evaluación normativa específica.</div></main></body></html>`);w.document.close()}
+function report(){if(!findings.length){alert('No hay hallazgos registrados.');return}const auto=findings.filter(f=>f.source==='IA especializada').length,rows=findings.map((f,i)=>`<article class="finding"><div class="fh"><div><small>HALLAZGO ${i+1}</small><h2>${esc(f.title)}</h2><div class="muted">${esc(f.category)} · ${esc(f.sector||'Sector no indicado')} · ${new Date(f.time).toLocaleString('es-AR')}</div></div><b>${esc(f.severity)}</b></div>${f.image?`<img src="${f.image}">`:''}<table><tr><th>Tipo</th><td>${esc(f.type)}</td></tr><tr><th>Origen</th><td>${esc(f.source)}</td></tr>${f.confidence!=null?`<tr><th>Confianza IA</th><td>${Math.round(f.confidence*100)}%</td></tr>`:''}<tr><th>Observación</th><td>${esc(f.notes)}</td></tr><tr><th>Normativa relacionada</th><td>${esc(f.norm)}</td></tr><tr><th>Acción recomendada</th><td>${esc(f.action)}</td></tr></table></article>`).join('');const w=window.open('','_blank');if(!w){alert('Permití ventanas emergentes.');return}w.document.write(`<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>Informe SST IA V4.4</title><style>body{margin:0;background:#eef3f7;font-family:Arial;color:#17212b}.bar{position:sticky;top:0;background:#0b1d33;padding:10px;text-align:center}.bar button{padding:11px 18px;border:0;border-radius:9px;font-weight:700}.page{max-width:900px;margin:18px auto;background:#fff;padding:32px}.head{border-bottom:4px solid #1769aa;padding-bottom:14px}.head h1{margin:3px 0;color:#0b1d33}.summary{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:18px 0}.metric{border:1px solid #d9e2ec;border-radius:12px;padding:12px}.metric strong{font-size:25px;display:block}.finding{border:1px solid #d9e2ec;border-radius:14px;padding:16px;margin:0 0 16px;break-inside:avoid}.fh{display:flex;justify-content:space-between;gap:15px}.fh h2{font-size:18px;margin:3px 0;color:#0b1d33}.fh b{background:#fee4e2;color:#b42318;padding:7px 10px;border-radius:999px;height:max-content;font-size:11px}.muted{font-size:11px;color:#607080}img{width:100%;max-height:390px;object-fit:contain;background:#f7f9fb;border-radius:10px;margin:13px 0}table{width:100%;border-collapse:collapse;font-size:12px}th,td{padding:8px;border-top:1px solid #d9e2ec;text-align:left;vertical-align:top}th{width:190px}.note{font-size:10px;color:#607080;line-height:1.5;border-top:1px solid #d9e2ec;padding-top:10px;margin-top:20px}@media(max-width:650px){.page{margin:0;padding:18px}.summary{grid-template-columns:1fr}}@media print{.bar{display:none}.page{margin:0;max-width:none}}</style></head><body><div class="bar"><button onclick="window.print()">Imprimir / Guardar como PDF</button></div><main class="page"><div class="head"><small>INSPECCIÓN PREVENTIVA ASISTIDA POR IA</small><h1>Informe de Seguridad e Higiene</h1><div>${new Date().toLocaleString('es-AR')} · SST IA V4.4</div></div><div class="summary"><div class="metric"><strong>${findings.length}</strong><span>Hallazgos</span></div><div class="metric"><strong>${auto}</strong><span>Desde IA</span></div><div class="metric"><strong>${discarded}</strong><span>Alertas descartadas</span></div></div>${rows}<div class="note"><b>Alcance:</b> herramienta preventiva de apoyo. Las detecciones automáticas y verificaciones guiadas requieren validación profesional y no sustituyen mediciones, documentación, capacitación ni evaluación normativa específica.</div></main></body></html>`);w.document.close()}
 function updateSensitivityInfo(){
   const mode=$('sensitivityMode').value,cfg=sensitivityCfg();
   const txt=mode==='max'
@@ -274,4 +381,71 @@ function updateSensitivityInfo(){
 $('sensitivityMode').onchange=updateSensitivityInfo;
 $('detailScan').onchange=()=>{tileIndex=0};
 updateSensitivityInfo();
-$('activityProfile').onchange=()=>{if($('activityProfile').value==='construction')$('legalProfile').value='construction';renderRisks()};$('legalProfile').onchange=renderRisks;$('startBtn').onclick=startCamera;$('stopBtn').onclick=stopCamera;$('manualBtn').onclick=openManual;$('switchBtn').onclick=async()=>{facing=facing==='environment'?'user':'environment';await startCamera()};$('dismissAlert').onclick=()=>{discarded++;persist();renderFindings();$('alertBox').classList.remove('show');currentAlert=null;currentPoseAlert=null};$('confirmAlert').onclick=()=>{if(currentPoseAlert){const c=captureFrame();if(c)lastCapture=c.toDataURL('image/jpeg',.78);pendingRisk=RISKS.find(r=>r.id==='ergo');manualMode=false;$('mTitle').textContent='Posible postura ergonómica desfavorable';$('mCategory').value='Ergonomía';$('mType').value='Condición insegura';$('mFinding').value=currentPoseAlert.label;$('mNotes').value='Screening postural automático por visión 2D. Validar duración, frecuencia, carga/fuerza y método ergonómico aplicable.';$('mAction').value='Realizar evaluación ergonómica del puesto/tarea y corregir postura, altura de trabajo, alcance, ayudas o método según corresponda.';$('mNormEdit').value='Resolución SRT 886/2015 (Protocolo de Ergonomía) y Resolución MTEySS 295/2003, Anexo I.';$('mNorm').textContent='Alerta de screening ergonómico. No equivale a evaluación formal.';$('modal').classList.add('show');$('alertBox').classList.remove('show');currentPoseAlert=null;return}openAlert()};$('cancelModal').onclick=()=>{$('modal').classList.remove('show');currentAlert=null;manualMode=false};$('saveFinding').onclick=saveFinding;$('modal').onclick=e=>{if(e.target===$('modal'))$('modal').classList.remove('show')};$('reportBtn').onclick=report;$('clearBtn').onclick=()=>{if(confirm('¿Borrar todos los hallazgos?')){findings=[];discarded=0;persist();renderFindings()}};$('selectAllBtn').onclick=()=>{document.querySelectorAll('.eval-check').forEach(x=>x.checked=true);syncPPEFromEval();renderRisks();updatePoseVisibility();loadPoseDetector()};$('selectNoneBtn').onclick=()=>{document.querySelectorAll('.eval-check').forEach(x=>x.checked=false);syncPPEFromEval();renderRisks();updatePoseVisibility()};$('applyTaskBtn').onclick=()=>{applyTaskProfile();loadPoseDetector();try{localStorage.setItem('sst_v43_task',$('taskType').value)}catch(e){}};document.querySelectorAll('.eval-check').forEach(x=>x.addEventListener('change',()=>{syncPPEFromEval();renderRisks();updatePoseVisibility();loadPoseDetector()}));window.addEventListener('resize',resizeCanvas);document.querySelectorAll('.eval-check').forEach(x=>x.checked=false);syncPPEFromEval();updatePoseVisibility();renderRisks();renderFindings();
+$('activityProfile').onchange=()=>{if($('activityProfile').value==='construction')$('legalProfile').value='construction';renderRisks()};$('legalProfile').onchange=renderRisks;$('startBtn').onclick=startCamera;$('stopBtn').onclick=stopCamera;$('manualBtn').onclick=openManual;$('switchBtn').onclick=async()=>{facing=facing==='environment'?'user':'environment';await startCamera()};$('dismissAlert').onclick=()=>{discarded++;persist();renderFindings();$('alertBox').classList.remove('show');currentAlert=null;currentPoseAlert=null};$('confirmAlert').onclick=()=>{if(currentPoseAlert){const c=captureFrame();if(c)lastCapture=c.toDataURL('image/jpeg',.78);pendingRisk=RISKS.find(r=>r.id==='ergo');manualMode=false;$('mTitle').textContent='Posible postura ergonómica desfavorable';$('mCategory').value='Ergonomía';$('mType').value='Condición insegura';$('mFinding').value=currentPoseAlert.label;$('mNotes').value='Screening postural automático por visión 2D. Validar duración, frecuencia, carga/fuerza y método ergonómico aplicable.';$('mAction').value='Realizar evaluación ergonómica del puesto/tarea y corregir postura, altura de trabajo, alcance, ayudas o método según corresponda.';$('mNormEdit').value='Resolución SRT 886/2015 (Protocolo de Ergonomía) y Resolución MTEySS 295/2003, Anexo I.';$('mNorm').textContent='Alerta de screening ergonómico. No equivale a evaluación formal.';$('modal').classList.add('show');$('alertBox').classList.remove('show');currentPoseAlert=null;return}openAlert()};$('cancelModal').onclick=()=>{$('modal').classList.remove('show');currentAlert=null;manualMode=false};$('saveFinding').onclick=saveFinding;$('modal').onclick=e=>{if(e.target===$('modal'))$('modal').classList.remove('show')};$('reportBtn').onclick=report;$('clearBtn').onclick=()=>{if(confirm('¿Borrar todos los hallazgos?')){findings=[];discarded=0;persist();renderFindings()}};
+document.addEventListener("input",e=>{
+  if(e.target?.classList?.contains("eval-check")) updateEvalUI();
+});
+
+function bindEvaluationControls(){
+  const dropdown=$("evalDropdown");
+
+  // Event delegation: funciona para todos los 78 checkboxes.
+  dropdown.addEventListener("change",e=>{
+    if(e.target && e.target.classList.contains("eval-check")){
+      refreshSelectionState();
+      loadPoseDetector();
+    }
+  });
+
+  $("selectAllBtn").onclick=()=>{
+    document.querySelectorAll(".eval-check").forEach(x=>x.checked=true);
+    refreshSelectionState();
+  };
+  $("selectNoneBtn").onclick=()=>{
+    document.querySelectorAll(".eval-check").forEach(x=>x.checked=false);
+    refreshSelectionState();
+  };
+  $("applyTaskInsideBtn").onclick=()=>{
+    applyTaskProfile();
+    refreshSelectionState();
+  };
+  $("selectAutoBtn").onclick=()=>{
+    document.querySelectorAll(".eval-check").forEach(x=>{
+      x.checked=x.closest(".eval-item")?.dataset.mode==="auto";
+    });
+    refreshSelectionState();
+  };
+
+  let showOnlySelected=false;
+  $("showSelectedBtn").onclick=()=>{
+    showOnlySelected=!showOnlySelected;
+    $("showSelectedBtn").classList.toggle("active",showOnlySelected);
+    document.querySelectorAll(".eval-item").forEach(it=>{
+      const keep=!showOnlySelected || it.querySelector(".eval-check")?.checked;
+      it.style.display=keep?"":"none";
+    });
+    document.querySelectorAll(".eval-category").forEach(cat=>{
+      const visible=[...cat.querySelectorAll(".eval-item")].some(it=>it.style.display!=="none");
+      cat.style.display=visible?"":"none";
+    });
+  };
+
+  $("evalSearch").addEventListener("input",filterEvalList);
+}
+
+$("applyTaskBtn").onclick=()=>{
+  applyTaskProfile();
+  refreshSelectionState();
+  try{localStorage.setItem("sst_v44_task",$("taskType").value)}catch(e){}
+};
+
+bindEvaluationControls();
+window.addEventListener("resize",resizeCanvas);try{
+  const savedTask=localStorage.getItem("sst_v44_task");
+  if(savedTask && $("taskType").querySelector(`option[value="${savedTask}"]`))$("taskType").value=savedTask;
+}catch(e){}
+if(!restoreEvalSelection()){
+  document.querySelectorAll(".eval-check").forEach(x=>x.checked=false);
+}
+refreshSelectionState();
+renderFindings();
