@@ -4,53 +4,346 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#07111f">
-<title>SST IA V4.2 — Alta Sensibilidad</title>
+<title>SST IA V4.3 — Alta Sensibilidad</title>
 <style>
 :root{--bg:#07111f;--panel:#0d1b2c;--line:#213b57;--txt:#f6f8fb;--muted:#9fb0c3;--green:#22c55e;--amber:#f59e0b;--red:#ef4444}
 *{box-sizing:border-box}html,body{margin:0;background:var(--bg);color:var(--txt);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}button,input,select,textarea{font:inherit}.app{max-width:820px;margin:auto;padding:env(safe-area-inset-top) 14px calc(26px + env(safe-area-inset-bottom))}header{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:14px 0}.brand{display:flex;gap:10px;align-items:center}.logo{width:46px;height:46px;border-radius:14px;background:linear-gradient(135deg,#2563eb,#06b6d4);display:grid;place-items:center;font-weight:900}h1{font-size:19px;margin:0}.sub{font-size:12px;color:var(--muted)}.pill{padding:8px 11px;border:1px solid var(--line);border-radius:999px;background:var(--panel);color:var(--muted);font-size:12px}.pill.on{background:#0e2a1d;border-color:#2c784c;color:#c3ffd7}.config{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:9px}select,input,textarea{width:100%;background:#081522;border:1px solid #294763;color:#fff;border-radius:12px;padding:11px}.ppe-box{background:var(--panel);border:1px solid var(--line);border-radius:15px;padding:11px;margin-bottom:10px}.ppe-title{font-size:12px;font-weight:800;margin-bottom:8px}.checks{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}.check{display:flex;gap:6px;align-items:center;background:#0a1726;border:1px solid #263f5a;border-radius:10px;padding:8px;font-size:11px}.check input{width:auto;accent-color:#2688ff}.card{background:linear-gradient(180deg,var(--panel),#091724);border:1px solid var(--line);border-radius:19px;overflow:hidden}.camera{position:relative;background:#02060b;aspect-ratio:3/4;max-height:69vh;overflow:hidden}video,canvas{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}canvas{pointer-events:none}.placeholder{position:absolute;inset:0;display:grid;place-items:center;text-align:center;color:var(--muted);padding:25px}.hud{position:absolute;top:10px;left:10px;right:10px;display:flex;justify-content:space-between;gap:7px;pointer-events:none}.hud span{padding:7px 9px;border-radius:10px;background:rgba(3,10,18,.84);border:1px solid rgba(255,255,255,.13);font-size:11px}.controls{display:grid;grid-template-columns:1fr 1fr;gap:9px;padding:12px}.btn{border:0;border-radius:14px;padding:12px 13px;font-weight:800;cursor:pointer}.btn:disabled{opacity:.45}.btn-primary{background:linear-gradient(135deg,#2563eb,#0ea5e9);color:#fff}.btn-secondary{background:#13263d;color:#e8f0f8;border:1px solid #294864}.btn-danger{background:#3d1218;color:#ffc4ca;border:1px solid #74323b}.btn-warn{background:#4c3108;color:#ffe1a5;border:1px solid #8a5a0d}.status{margin-top:10px;padding:11px 12px;border-radius:13px;background:#0b2034;border:1px solid #21496d;color:#cde8ff;font-size:12px;line-height:1.45}.status.good{background:#0e2a1d;border-color:#296e47;color:#c8ffda}.status.warn{background:#302109;border-color:#785417;color:#ffe0a1}.alert{display:none;margin-top:10px;padding:13px;border-radius:16px;background:#38141a;border:1px solid #78343d}.alert.show{display:block}.alert-top{display:flex;justify-content:space-between;gap:10px}.alert h3{font-size:15px;margin:0}.alert p{font-size:11px;color:#edc7cc;line-height:1.45}.conf{font-size:10px;padding:5px 8px;border-radius:999px;background:#5c1d26;color:#ffd4d9;height:max-content}.alert-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}.section{margin-top:15px}.section h2{font-size:16px;margin:0 0 9px}.section-intro{font-size:11px;color:var(--muted);line-height:1.45;margin:-3px 0 9px}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.metric{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px}.metric b{display:block;font-size:24px}.metric span{font-size:11px;color:var(--muted)}.risk-grid{display:grid;grid-template-columns:1fr;gap:8px}.risk-card{background:var(--panel);border:1px solid var(--line);border-radius:15px;padding:12px}.risk-head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}.risk-name{display:flex;gap:9px}.risk-icon{width:36px;height:36px;border-radius:10px;background:#142a43;display:grid;place-items:center;font-size:19px}.risk-card strong{font-size:13px}.risk-card small{display:block;color:var(--muted);font-size:10px;line-height:1.35;margin-top:3px}.mode{font-size:9px;font-weight:900;padding:5px 7px;border-radius:999px;height:max-content}.mode.auto{background:#0d3a28;color:#bfffd7}.mode.guided{background:#40300c;color:#ffe0a3}.risk-actions{display:flex;gap:7px;margin-top:9px}.mini{padding:8px 10px;border-radius:10px;border:1px solid #2a4866;background:#10243a;color:#eaf3fb;font-size:10px;font-weight:750}.findings{display:grid;gap:8px}.finding{background:var(--panel);border:1px solid var(--line);border-radius:15px;padding:12px}.finding-top{display:flex;justify-content:space-between;gap:10px}.finding h3{font-size:13px;margin:0}.finding p{font-size:11px;color:var(--muted);line-height:1.45;margin:6px 0 0}.tag{font-size:10px;border-radius:999px;padding:5px 8px;background:#46151d;color:#ffd2d8;height:max-content}.thumb{width:100%;max-height:220px;object-fit:contain;background:#06101a;border-radius:10px;margin-top:9px;border:1px solid var(--line)}.actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}.modal{position:fixed;inset:0;background:rgba(0,0,0,.68);z-index:30;display:none;align-items:flex-end}.modal.show{display:flex}.sheet{width:100%;max-width:820px;margin:auto;background:#0b1828;border:1px solid #29445f;border-radius:22px 22px 0 0;padding:16px max(16px,env(safe-area-inset-right)) calc(16px + env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left));max-height:91vh;overflow:auto}.sheet h3{margin:0 0 5px}.sheet p{font-size:12px;color:var(--muted);line-height:1.5}label{display:block;font-size:11px;color:#bfd0e2;margin:10px 0 5px}textarea{min-height:72px}.note{font-size:10px;color:#7f94aa;line-height:1.5;margin:14px 2px}@media(min-width:700px){.camera{aspect-ratio:16/10}.risk-grid{grid-template-columns:1fr 1fr}}
 
 .eval-panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:12px;margin-bottom:10px}.eval-head{display:flex;justify-content:space-between;gap:8px;align-items:center;margin-bottom:9px}.eval-head strong{font-size:13px}.eval-buttons{display:flex;gap:6px}.eval-buttons button{padding:7px 9px;border-radius:9px;border:1px solid #2a4866;background:#10243a;color:#eaf3fb;font-size:10px;font-weight:750}.eval-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px}.eval-item{display:flex;align-items:flex-start;gap:7px;background:#091827;border:1px solid #263f5a;border-radius:11px;padding:9px;font-size:11px;line-height:1.25}.eval-item input{width:auto;accent-color:#2688ff;margin-top:2px}.eval-item b{display:block;font-size:11px}.eval-item small{display:block;color:var(--muted);font-size:9px;margin-top:2px}.pose-box{margin-top:10px;padding:10px 12px;border-radius:13px;background:#17152e;border:1px solid #4b4380;color:#ddd8ff;font-size:11px;line-height:1.45}.pose-box strong{color:#fff}@media(min-width:700px){.eval-grid{grid-template-columns:repeat(3,1fr)}}
+
+/* V4.3 - selector desplegable detallado */
+.eval-dropdown{background:var(--panel);border:1px solid var(--line);border-radius:16px;margin-bottom:10px;overflow:hidden}
+.eval-dropdown>summary{list-style:none;cursor:pointer;padding:13px 14px;display:flex;align-items:center;justify-content:space-between;gap:12px;font-weight:850;font-size:13px}
+.eval-dropdown>summary::-webkit-details-marker{display:none}
+.eval-dropdown>summary:after{content:"⌄";font-size:18px;color:#9fd1ff;transition:.2s}
+.eval-dropdown[open]>summary:after{transform:rotate(180deg)}
+.eval-summary-left{display:flex;align-items:center;gap:9px}
+.eval-summary-count{font-size:10px;padding:5px 8px;border-radius:999px;background:#15304c;color:#cde8ff;border:1px solid #2b5278;white-space:nowrap}
+.eval-body{padding:0 12px 12px;border-top:1px solid var(--line)}
+.eval-toolbar{display:grid;grid-template-columns:1fr;gap:8px;padding:11px 0 8px}
+.eval-toolbar-row{display:flex;flex-wrap:wrap;gap:6px}
+.eval-tool{padding:8px 10px;border-radius:10px;border:1px solid #2a4866;background:#10243a;color:#eaf3fb;font-size:10px;font-weight:800}
+.eval-tool.active{background:#153c2c;border-color:#2c7650;color:#c9ffdc}
+.eval-search{padding:10px 11px!important;font-size:12px}
+.eval-category{border:1px solid #203c58;border-radius:12px;margin-top:8px;background:#091827;overflow:hidden}
+.eval-category>summary{cursor:pointer;list-style:none;padding:10px 11px;font-size:12px;font-weight:850;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.eval-category>summary::-webkit-details-marker{display:none}
+.eval-category>summary:after{content:"+";color:#8dbde8;font-size:16px}
+.eval-category[open]>summary:after{content:"−"}
+.eval-cat-count{font-size:9px;font-weight:800;color:#9eb0c3}
+.eval-list{display:grid;grid-template-columns:1fr;gap:6px;padding:0 8px 8px}
+.eval-item{display:flex;align-items:flex-start;gap:8px;background:#0c1d2f;border:1px solid #23425f;border-radius:10px;padding:9px!important;margin:0!important;color:#fff}
+.eval-item input{width:auto!important;margin-top:2px;accent-color:#2688ff}
+.eval-item b{display:block;font-size:11px}
+.eval-item small{display:block;font-size:9px;color:#9fb0c3;line-height:1.35;margin-top:2px}
+.eval-item.hidden{display:none}
+.eval-badge{display:inline-block;margin-top:5px;margin-right:4px;padding:3px 5px;border-radius:999px;font-size:8px;font-weight:900;letter-spacing:.02em}
+.eval-badge.auto{background:#0c3b28;color:#bfffd7}
+.eval-badge.pose{background:#342564;color:#e1d8ff}
+.eval-badge.guide{background:#46330b;color:#ffe0a1}
+.eval-help{font-size:10px;color:#91a8be;line-height:1.45;margin:4px 1px 0}
+.task-hint{font-size:10px;color:#aac0d4;line-height:1.4;margin:-2px 0 9px}
+.selected-preview{font-size:10px;color:#bcd1e4;line-height:1.45;margin:7px 1px 0;max-height:70px;overflow:auto}
+@media(min-width:700px){.eval-list{grid-template-columns:1fr 1fr}.eval-toolbar{grid-template-columns:1fr auto}}
+
 </style>
 </head>
 <body>
 <div class="app">
-<header><div class="brand"><div class="logo">IA</div><div><h1>SST IA V4.2</h1><div class="sub">Prevención de Accidentes · Evaluación seleccionable</div></div></div><div id="onlinePill" class="pill">● cámara inactiva</div></header>
+<header><div class="brand"><div class="logo">IA</div><div><h1>SST IA V4.3</h1><div class="sub">Prevención de Accidentes · Inspector detallado</div></div></div><div id="onlinePill" class="pill">● cámara inactiva</div></header>
 <div class="config"><select id="legalProfile"><option value="general">Normativa: establecimiento general</option><option value="construction">Normativa: construcción / obra</option></select><select id="activityProfile"><option value="general">Inspección: general</option><option value="construction">Inspección: obra / altura</option><option value="maintenance">Inspección: taller / mantenimiento</option><option value="logistics">Inspección: depósito / logística</option><option value="electrical">Inspección: riesgo eléctrico</option><option value="chemicals">Inspección: químicos</option><option value="confined">Inspección: espacio confinado</option></select></div>
 
-<div class="config"><select id="taskType"><option value="general">Tarea: General / recorrido</option><option value="painting">Tarea: Pintura / terminaciones</option><option value="electrical">Tarea: Mantenimiento eléctrico</option><option value="height">Tarea: Trabajo en altura</option><option value="powerTools">Tarea: Herramientas eléctricas / corte</option><option value="manualHandling">Tarea: Manipulación manual de cargas</option><option value="cleaning">Tarea: Limpieza</option><option value="warehouse">Tarea: Depósito / logística</option><option value="welding">Tarea: Soldadura / amolado</option><option value="construction">Tarea: Obra / construcción</option><option value="confined">Tarea: Espacio confinado</option><option value="office">Tarea: Oficina / ergonomía</option></select><button id="applyTaskBtn" class="btn btn-secondary" style="padding:9px">Aplicar perfil de tarea</button></div>
-<div class="eval-panel"><div class="eval-head"><strong>¿Qué querés evaluar?</strong><div class="eval-buttons"><button id="selectAllBtn" type="button">Todos</button><button id="selectNoneBtn" type="button">Ninguno</button></div></div><div class="eval-grid">
-<label class="eval-item"><input class="eval-check" id="evalHardhat" type="checkbox"><span><b>Casco</b><small>Casco / sin casco</small></span></label>
-<label class="eval-item"><input class="eval-check" id="evalVest" type="checkbox"><span><b>Chaleco</b><small>Alta visibilidad</small></span></label>
-<label class="eval-item"><input class="eval-check" id="evalGoggles" type="checkbox"><span><b>Protección ocular</b><small>Antiparras</small></span></label>
-<label class="eval-item"><input class="eval-check" id="evalGloves" type="checkbox"><span><b>Guantes</b><small>Guantes / sin guantes</small></span></label>
-<label class="eval-item"><input class="eval-check" id="evalMask" type="checkbox"><span><b>Respiratoria</b><small>Máscara / sin máscara</small></span></label>
-<label class="eval-item"><input class="eval-check" id="evalHarness" type="checkbox"><span><b>Arnés / caídas</b><small>Arnés y caída</small></span></label>
-<label class="eval-item"><input class="eval-check" id="evalErgo" type="checkbox"><span><b>Ergonomía / postura</b><small>Tronco, rodillas, brazos</small></span></label>
-<label class="eval-item"><input class="eval-check" id="evalManualHandling" type="checkbox"><span><b>Manipulación de cargas</b><small>Postura + evaluación guiada</small></span></label>
-<label class="eval-item"><input class="eval-check" id="evalElectric" type="checkbox"><span><b>Electricidad</b><small>Inspección guiada</small></span></label>
-<label class="eval-item"><input class="eval-check" id="evalMachine" type="checkbox"><span><b>Máquinas / herramientas</b><small>Resguardos y uso</small></span></label>
-<label class="eval-item"><input class="eval-check" id="evalSlip" type="checkbox"><span><b>Orden / caídas al mismo nivel</b><small>Obstáculos y derrames</small></span></label>
-<label class="eval-item"><input class="eval-check" id="evalFire" type="checkbox"><span><b>Incendio / evacuación</b><small>Matafuegos y salidas</small></span></label>
-<label class="eval-item"><input class="eval-check" id="evalVehicle" type="checkbox"><span><b>Tránsito interno</b><small>Vehículos / autoelevadores</small></span></label>
-<label class="eval-item"><input class="eval-check" id="evalStorage" type="checkbox"><span><b>Almacenamiento</b><small>Estibas / caída de objetos</small></span></label>
-<label class="eval-item"><input class="eval-check" id="evalChemical" type="checkbox"><span><b>Químicos</b><small>Derrames / recipientes</small></span></label>
-<label class="eval-item"><input class="eval-check" id="evalConfined" type="checkbox"><span><b>Espacios confinados</b><small>Ingreso y controles</small></span></label>
-</div></div>
-<div class="config">
-  <select id="sensitivityMode">
-    <option value="max" selected>Sensibilidad: MÁXIMA</option>
-    <option value="high">Sensibilidad: Alta</option>
-    <option value="balanced">Sensibilidad: Equilibrada</option>
-  </select>
-  <select id="detailScan">
-    <option value="on" selected>Barrido de detalle: ACTIVADO</option>
-    <option value="off">Barrido de detalle: desactivado</option>
-  </select>
+<div class="task-hint">Elegí el tipo de tarea y, si querés, aplicá una selección recomendada. Después podés modificar cada ítem en el desplegable.</div><div class="config"><select id="taskType"><option value="general">Tarea: General / recorrido</option><option value="painting">Tarea: Pintura / terminaciones</option><option value="electrical">Tarea: Mantenimiento eléctrico</option><option value="height">Tarea: Trabajo en altura</option><option value="powerTools">Tarea: Herramientas eléctricas / corte</option><option value="manualHandling">Tarea: Manipulación manual de cargas</option><option value="cleaning">Tarea: Limpieza</option><option value="warehouse">Tarea: Depósito / logística</option><option value="welding">Tarea: Soldadura / amolado</option><option value="construction">Tarea: Obra / construcción</option><option value="confined">Tarea: Espacio confinado</option><option value="office">Tarea: Oficina / ergonomía</option></select><button id="applyTaskBtn" class="btn btn-secondary" style="padding:9px">Aplicar recomendados de la tarea</button></div>
+
+<details class="eval-dropdown" id="evalDropdown">
+<summary>
+  <span class="eval-summary-left"><span>🎯 Qué evaluar en esta inspección</span></span>
+  <span class="eval-summary-count" id="evalSummaryCount">0 ítems</span>
+</summary>
+<div class="eval-body">
+  <div class="eval-toolbar">
+    <input id="evalSearch" class="eval-search" placeholder="Buscar: tablero, postura, matafuego, escalera…" />
+    <div class="eval-toolbar-row">
+      <button class="eval-tool" id="selectAllBtn" type="button">Todos</button>
+      <button class="eval-tool" id="selectNoneBtn" type="button">Ninguno</button>
+      <button class="eval-tool" id="applyTaskInsideBtn" type="button">Perfil de tarea</button>
+      <button class="eval-tool" id="selectAutoBtn" type="button">Solo IA</button>
+      <button class="eval-tool" id="showSelectedBtn" type="button">Solo marcados</button>
+    </div>
+  </div>
+  <div class="eval-help">Seleccioná exactamente qué querés inspeccionar. Las detecciones automáticas solo se activan para las clases que el modelo conoce; el resto queda como control guiado con evidencia, normativa y acción recomendada.</div>
+  <details class="eval-category" data-cat="epp">
+<summary><span>🦺 EPP — Elementos de Protección Personal</span><span class="eval-cat-count" id="catCount_epp">0 seleccionados</span></summary>
+<div class="eval-list"><label class="eval-item" data-mode="auto">
+<input class="eval-check" id="evalHardhat" type="checkbox">
+<span><b>Casco de seguridad</b><small>Detectar casco / SIN CASCO.</small><span class="eval-badge auto">IA automática</span></span>
+</label><label class="eval-item" data-mode="auto">
+<input class="eval-check" id="evalVest" type="checkbox">
+<span><b>Chaleco / alta visibilidad</b><small>Detectar chaleco / SIN CHALECO.</small><span class="eval-badge auto">IA automática</span></span>
+</label><label class="eval-item" data-mode="auto">
+<input class="eval-check" id="evalGoggles" type="checkbox">
+<span><b>Protección ocular</b><small>Antiparras / SIN ANTIPARRAS.</small><span class="eval-badge auto">IA automática</span></span>
+</label><label class="eval-item" data-mode="auto">
+<input class="eval-check" id="evalGloves" type="checkbox">
+<span><b>Guantes</b><small>Guantes / SIN GUANTES.</small><span class="eval-badge auto">IA automática</span></span>
+</label><label class="eval-item" data-mode="auto">
+<input class="eval-check" id="evalMask" type="checkbox">
+<span><b>Protección respiratoria</b><small>Máscara / SIN PROTECCIÓN RESPIRATORIA.</small><span class="eval-badge auto">IA automática</span></span>
+</label><label class="eval-item" data-mode="auto">
+<input class="eval-check" id="evalHarness" type="checkbox">
+<span><b>Arnés / sistema anticaídas</b><small>Detectar NO_HARNESS y eventos de caída.</small><span class="eval-badge auto">IA automática</span></span>
+</label><label class="eval-item" data-mode="guide">
+<input class="eval-check" id="evalFaceShield" type="checkbox">
+<span><b>Pantalla facial</b><small>Uso de pantalla facial cuando la tarea lo requiera.</small><span class="eval-badge guide">Verificación guiada</span></span>
+</label><label class="eval-item" data-mode="guide">
+<input class="eval-check" id="evalHearing" type="checkbox">
+<span><b>Protección auditiva</b><small>Tapones u orejeras cuando exista exposición a ruido.</small><span class="eval-badge guide">Verificación guiada</span></span>
+</label><label class="eval-item" data-mode="guide">
+<input class="eval-check" id="evalFootwear" type="checkbox">
+<span><b>Calzado de seguridad</b><small>Tipo de calzado y protección requerida por la tarea.</small><span class="eval-badge guide">Verificación guiada</span></span>
+</label><label class="eval-item" data-mode="guide">
+<input class="eval-check" id="evalClothing" type="checkbox">
+<span><b>Ropa de trabajo adecuada</b><small>Ropa suelta, mangas, prendas incompatibles con máquinas/calor.</small><span class="eval-badge guide">Verificación guiada</span></span>
+</label></div>
+</details><details class="eval-category" data-cat="ergo">
+<summary><span>🧍 Ergonomía y biomecánica</span><span class="eval-cat-count" id="catCount_ergo">0 seleccionados</span></summary>
+<div class="eval-list"><label class="eval-item" data-mode="pose">
+<input class="eval-check" id="evalErgo" type="checkbox">
+<span><b>Postura general</b><small>Screening postural con puntos corporales.</small><span class="eval-badge pose">IA postural</span></span>
+</label><label class="eval-item" data-mode="pose">
+<input class="eval-check" id="evalTrunk" type="checkbox">
+<span><b>Flexión / inclinación del tronco</b><small>Tronco inclinado o flexión marcada.</small><span class="eval-badge pose">IA postural</span></span>
+</label><label class="eval-item" data-mode="pose">
+<input class="eval-check" id="evalKnee" type="checkbox">
+<span><b>Arrodillado / cuclillas</b><small>Flexión marcada de rodillas y posturas bajas.</small><span class="eval-badge pose">IA postural</span></span>
+</label><label class="eval-item" data-mode="pose">
+<input class="eval-check" id="evalArms" type="checkbox">
+<span><b>Brazos elevados / alcance</b><small>Brazos por encima o lejos del cuerpo.</small><span class="eval-badge pose">IA postural</span></span>
+</label><label class="eval-item" data-mode="guide">
+<input class="eval-check" id="evalTwist" type="checkbox">
+<span><b>Torsión del tronco</b><small>Rotación o postura asimétrica sostenida.</small><span class="eval-badge guide">Verificación guiada</span></span>
+</label><label class="eval-item" data-mode="guide">
+<input class="eval-check" id="evalManualHandling" type="checkbox">
+<span><b>Manipulación manual de cargas</b><small>Levantar, bajar o sostener cargas.</small><span class="eval-badge guide">Verificación guiada</span></span>
+</label><label class="eval-item" data-mode="guide">
+<input class="eval-check" id="evalPushPull" type="checkbox">
+<span><b>Empuje y arrastre</b><small>Carros, cargas o esfuerzos de empuje/tracción.</small><span class="eval-badge guide">Verificación guiada</span></span>
+</label><label class="eval-item" data-mode="guide">
+<input class="eval-check" id="evalRepetition" type="checkbox">
+<span><b>Movimientos repetitivos</b><small>Frecuencia y repetición de gestos/tareas.</small><span class="eval-badge guide">Verificación guiada</span></span>
+</label><label class="eval-item" data-mode="guide">
+<input class="eval-check" id="evalStaticPosture" type="checkbox">
+<span><b>Postura estática prolongada</b><small>Permanencia sentado/de pie o postura fija.</small><span class="eval-badge guide">Verificación guiada</span></span>
+</label><label class="eval-item" data-mode="guide">
+<input class="eval-check" id="evalReach" type="checkbox">
+<span><b>Alcances alejados</b><small>Trabajo con elementos fuera de zona cómoda de alcance.</small><span class="eval-badge guide">Verificación guiada</span></span>
+</label></div>
+</details><details class="eval-category" data-cat="falls">
+<summary><span>🪜 Caídas, altura y accesos</span><span class="eval-cat-count" id="catCount_falls">0 seleccionados</span></summary>
+<div class="eval-list"><label class="eval-item" data-mode="guide">
+<input class="eval-check" id="evalSlip" type="checkbox">
+<span><b>Caídas al mismo nivel</b><small>Derrames, cables, desniveles y obstáculos.</small><span class="eval-badge guide">Verificación guiada</span></span>
+</label><label class="eval-item" data-mode="guide">
+<input class="eval-check" id="evalLadder" type="checkbox">
+<span><b>Escaleras portátiles</b><small>Apoyo, estado, ángulo, uso y acceso.</small><span class="eval-badge guide">Verificación guiada</span></span>
+</label><label class="eval-item" data-mode="guide">
+<input class="eval-check" id="evalScaffold" type="checkbox">
+<span><b>Andamios / plataformas</b><small>Plataforma, acceso, estabilidad y protecciones.</small><span class="eval-badge guide">Verificación guiada</span></span>
+</label><label class="eval-item" data-mode="guide">
+<input class="eval-check" id="evalEdge" type="checkbox">
+<span><b>Bordes / desniveles</b><small>Trabajos próximos a bordes sin protección.</small><span class="eval-badge guide">Verificación guiada</span></span>
+</label><label class="eval-item" data-mode="guide">
+<input class="eval-check" id="evalOpening" type="checkbox">
+<span><b>Huecos / aberturas</b><small>Huecos de piso, paredes o vacíos sin protección.</small><span class="eval-badge guide">Verificación guiada</span></span>
+</label><label class="eval-item" data-mode="guide">
+<input class="eval-check" id="evalGuardrail" type="checkbox">
+<span><b>Barandas / protección colectiva</b><small>Existencia, continuidad y condición de barandas.</small><span class="eval-badge guide">Verificación guiada</span></span>
+</label><label class="eval-item" data-mode="guide">
+<input class="eval-check" id="evalFallObjects" type="checkbox">
+<span><b>Caída de objetos desde altura</b><small>Materiales/herramientas con posibilidad de caer sobre personas.</small><span class="eval-badge guide">Verificación guiada</span></span>
+</label></div>
+</details><details class="eval-category" data-cat="electrical">
+<summary><span>⚡ Riesgo eléctrico</span><span class="eval-cat-count" id="catCount_electrical">0 seleccionados</span></summary>
+<div class="eval-list"><label class="eval-item" data-mode="guide">
+<input class="eval-check" id="evalElectric" type="checkbox">
+<span><b>Evaluación eléctrica general</b><small>Condición general de instalación y entorno.</small><span class="eval-badge guide">Verificación guiada</span></span>
+</label><label class="eval-item" data-mode="guide">
+<input class="eval-check" id="evalPanelOpen" type="checkbox">
+<span><b>Tablero / gabinete abierto</b><small>Puerta/tapa abierta o acceso no controlado.</small><span class="eval-badge guide">Verificación guiada</span></span>
+</label><label class="eval-item" data-mode="guide">
+<input class="eval-check" id="evalExposedParts" type="checkbox">
+<span><b>Partes activas accesibles</b><small>Bornes, conductores o partes con posible contacto.</small><span class="eval-badge guide">Verificación guiada</span></span>
+</label><label class="eval-item" data-mode="guide">
+<input class="eval-check" id="evalDamagedCable" type="checkbox">
+<span><b>Cables / aislación dañada</b><small>Cortes, empalmes, conductores expuestos.</small><span class="eval-badge guide">Verificación guiada</span></span>
+</label><label class="eval-item" data-mode="guide">
+<input class="eval-check" id="evalTemporaryElectrical" type="checkbox">
+<span><b>Instalación provisoria / alargues</b><small>Prolongaciones, triples, adaptaciones o conexiones temporales.</small><span class="eval-badge guide">Verificación guiada</span></span>
+</label><label class="eval-item" data-mode="guide">
+<input class="eval-check" id="evalWetElectrical" type="checkbox">
+<span><b>Electricidad + humedad</b><small>Tableros, herramientas o conexiones próximas a agua/humedad.</small><span class="eval-badge guide">Verificación guiada</span></span>
+</label><label class="eval-item" data-mode="guide">
+<input class="eval-check" id="evalLOTO" type="checkbox">
+<span><b>Bloqueo / consignación</b><small>Aislamiento de energías antes de intervenir.</small><span class="eval-badge guide">Verificación guiada</span></span>
+</label><label class="eval-item" data-mode="guide">
+<input class="eval-check" id="evalGrounding" type="checkbox">
+<span><b>Puesta a tierra / protección</b><small>Existencia visible/documental de protecciones aplicables.</small><span class="eval-badge guide">Verificación guiada</span></span>
+</label><label class="eval-item" data-mode="guide">
+<input class="eval-check" id="evalElectricalSign" type="checkbox">
+<span><b>Señalización / acceso eléctrico</b><small>Identificación, advertencia y restricción de acceso.</small><span class="eval-badge guide">Verificación guiada</span></span>
+</label></div>
+</details><details class="eval-category" data-cat="machines">
+<summary><span>⚙️ Máquinas y herramientas</span><span class="eval-cat-count" id="catCount_machines">0 seleccionados</span></summary>
+<div class="eval-list"><label class="eval-item" data-mode="guide">
+<input class="eval-check" id="evalMachine" type="checkbox">
+<span><b>Evaluación general de máquinas</b><small>Estado, uso, acceso y entorno.</small><span class="eval-badge guide">Verificación guiada</span></span>
+</label><label class="eval-item" data-mode="guide">
+<input class="eval-check" id="evalGuard" type="checkbox">
+<span><b>Resguardos / partes móviles</b><small>Resguardo en transmisión, corte, atrapamiento o proyección.</small><span class="eval-badge guide">Verificación guiada</span></span>
+</label><label class="eval-item" data-mode="guide">
+<input class="eval-check" id="evalEmergencyStop" type="checkbox">
+<span><b>Parada de emergencia</b><small>Acceso y estado del dispositivo cuando corresponda.</small><span class="eval-badge guide">Verificación guiada</span></span>
+</label><label class="eval-item" data-mode="guide">
+<input class="eval-check" id="evalPortableTool" type="checkbox">
+<span><b>Herramientas portátiles</b><small>Estado, cable, carcasa, empuñadura y uso.</small><span class="eval-badge guide">Verificación guiada</span></span>
+</label><label class="eval-item" data-mode="guide">
+<input class="eval-check" id="evalGrinding" type="checkbox">
+<span><b>Amolado / abrasivos</b><small>Disco, guarda, proyección, postura y EPP.</small><span class="eval-badge guide">Verificación guiada</span></span>
+</label><label class="eval-item" data-mode="guide">
+<input class="eval-check" id="evalCutting" type="checkbox">
+<span><b>Corte / sierras</b><small>Protección de hoja, apoyo, método de corte.</small><span class="eval-badge guide">Verificación guiada</span></span>
+</label><label class="eval-item" data-mode="guide">
+<input class="eval-check" id="evalMachineLOTO" type="checkbox">
+<span><b>Bloqueo para mantenimiento</b><small>Energías controladas durante mantenimiento/limpieza.</small><span class="eval-badge guide">Verificación guiada</span></span>
+</label><label class="eval-item" data-mode="guide">
+<input class="eval-check" id="evalToolCondition" type="checkbox">
+<span><b>Herramientas deterioradas</b><small>Roturas, improvisaciones o elementos defectuosos.</small><span class="eval-badge guide">Verificación guiada</span></span>
+</label></div>
+</details><details class="eval-category" data-cat="fire">
+<summary><span>🧯 Incendio, emergencia y evacuación</span><span class="eval-cat-count" id="catCount_fire">0 seleccionados</span></summary>
+<div class="eval-list"><label class="eval-item" data-mode="guide">
+<input class="eval-check" id="evalFire" type="checkbox">
+<span><b>Evaluación general de incendio</b><small>Fuentes de ignición, combustibles y protección.</small><span class="eval-badge guide">Verificación guiada</span></span>
+</label><label class="eval-item" data-mode="guide">
+<input class="eval-check" id="evalExtAccess" type="checkbox">
+<span><b>Acceso a matafuegos</b><small>Matafuego accesible, visible y no obstruido.</small><span class="eval-badge guide">Verificación guiada</span></span>
+</label><label class="eval-item" data-mode="guide">
+<input class="eval-check" id="evalExitBlocked" type="checkbox">
+<span><b>Salidas / vías de escape</b><small>Puertas, pasillos y recorridos sin obstrucciones.</small><span class="eval-badge guide">Verificación guiada</span></span>
+</label><label class="eval-item" data-mode="guide">
+<input class="eval-check" id="evalCombustibles" type="checkbox">
+<span><b>Combustibles / inflamables</b><small>Almacenamiento y proximidad a fuentes de ignición.</small><span class="eval-badge guide">Verificación guiada</span></span>
+</label><label class="eval-item" data-mode="guide">
+<input class="eval-check" id="evalHotWork" type="checkbox">
+<span><b>Trabajo en caliente</b><small>Soldadura, chispas, corte y control de combustibles.</small><span class="eval-badge guide">Verificación guiada</span></span>
+</label><label class="eval-item" data-mode="guide">
+<input class="eval-check" id="evalFireSign" type="checkbox">
+<span><b>Señalización de emergencia</b><small>Matafuegos, salidas y advertencias.</small><span class="eval-badge guide">Verificación guiada</span></span>
+</label><label class="eval-item" data-mode="guide">
+<input class="eval-check" id="evalEmergencyLight" type="checkbox">
+<span><b>Iluminación de emergencia</b><small>Disponibilidad/estado a verificar.</small><span class="eval-badge guide">Verificación guiada</span></span>
+</label></div>
+</details><details class="eval-category" data-cat="traffic">
+<summary><span>🚜 Tránsito interno y logística</span><span class="eval-cat-count" id="catCount_traffic">0 seleccionados</span></summary>
+<div class="eval-list"><label class="eval-item" data-mode="guide">
+<input class="eval-check" id="evalVehicle" type="checkbox">
+<span><b>Interacción persona–vehículo</b><small>Proximidad, trayectorias y maniobras.</small><span class="eval-badge guide">Verificación guiada</span></span>
+</label><label class="eval-item" data-mode="guide">
+<input class="eval-check" id="evalPedSeg" type="checkbox">
+<span><b>Segregación peatón / vehículo</b><small>Sendas, barreras y cruces.</small><span class="eval-badge guide">Verificación guiada</span></span>
+</label><label class="eval-item" data-mode="guide">
+<input class="eval-check" id="evalForklift" type="checkbox">
+<span><b>Autoelevadores</b><small>Operación, carga, horquillas y entorno.</small><span class="eval-badge guide">Verificación guiada</span></span>
+</label><label class="eval-item" data-mode="guide">
+<input class="eval-check" id="evalRaisedLoad" type="checkbox">
+<span><b>Carga elevada</b><small>Personas próximas o debajo de cargas elevadas.</small><span class="eval-badge guide">Verificación guiada</span></span>
+</label><label class="eval-item" data-mode="guide">
+<input class="eval-check" id="evalReverse" type="checkbox">
+<span><b>Marcha atrás / punto ciego</b><small>Visibilidad, señalero y alarmas.</small><span class="eval-badge guide">Verificación guiada</span></span>
+</label><label class="eval-item" data-mode="guide">
+<input class="eval-check" id="evalSpeed" type="checkbox">
+<span><b>Velocidad interna</b><small>Velocidad compatible con tránsito y entorno.</small><span class="eval-badge guide">Verificación guiada</span></span>
+</label><label class="eval-item" data-mode="guide">
+<input class="eval-check" id="evalParking" type="checkbox">
+<span><b>Estacionamiento / equipo detenido</b><small>Freno, horquillas/cargas y ubicación segura.</small><span class="eval-badge guide">Verificación guiada</span></span>
+</label></div>
+</details><details class="eval-category" data-cat="storage">
+<summary><span>📦 Almacenamiento, estiba e izaje</span><span class="eval-cat-count" id="catCount_storage">0 seleccionados</span></summary>
+<div class="eval-list"><label class="eval-item" data-mode="guide">
+<input class="eval-check" id="evalStorage" type="checkbox">
+<span><b>Evaluación general de almacenamiento</b><small>Orden, estabilidad y compatibilidad.</small><span class="eval-badge guide">Verificación guiada</span></span>
+</label><label class="eval-item" data-mode="guide">
+<input class="eval-check" id="evalStack" type="checkbox">
+<span><b>Estiba inestable</b><small>Altura, apoyo, inclinación y método de retiro.</small><span class="eval-badge guide">Verificación guiada</span></span>
+</label><label class="eval-item" data-mode="guide">
+<input class="eval-check" id="evalShelf" type="checkbox">
+<span><b>Estanterías</b><small>Daños, sobrecarga, anclaje y estabilidad.</small><span class="eval-badge guide">Verificación guiada</span></span>
+</label><label class="eval-item" data-mode="guide">
+<input class="eval-check" id="evalAisles" type="checkbox">
+<span><b>Pasillos de depósito</b><small>Circulación libre y accesos.</small><span class="eval-badge guide">Verificación guiada</span></span>
+</label><label class="eval-item" data-mode="guide">
+<input class="eval-check" id="evalSuspended" type="checkbox">
+<span><b>Cargas suspendidas / izaje</b><small>Personas bajo carga, eslingas y zona de exclusión.</small><span class="eval-badge guide">Verificación guiada</span></span>
+</label><label class="eval-item" data-mode="guide">
+<input class="eval-check" id="evalMaterialEdge" type="checkbox">
+<span><b>Material próximo a bordes</b><small>Posibilidad de caída de objetos.</small><span class="eval-badge guide">Verificación guiada</span></span>
+</label></div>
+</details><details class="eval-category" data-cat="chemical">
+<summary><span>🧪 Sustancias químicas y contaminantes</span><span class="eval-cat-count" id="catCount_chemical">0 seleccionados</span></summary>
+<div class="eval-list"><label class="eval-item" data-mode="guide">
+<input class="eval-check" id="evalChemical" type="checkbox">
+<span><b>Evaluación química general</b><small>Producto, exposición y controles.</small><span class="eval-badge guide">Verificación guiada</span></span>
+</label><label class="eval-item" data-mode="guide">
+<input class="eval-check" id="evalLabel" type="checkbox">
+<span><b>Rotulado / identificación</b><small>Envases correctamente identificados.</small><span class="eval-badge guide">Verificación guiada</span></span>
+</label><label class="eval-item" data-mode="guide">
+<input class="eval-check" id="evalSpill" type="checkbox">
+<span><b>Derrames / pérdidas</b><small>Piso contaminado o producto liberado.</small><span class="eval-badge guide">Verificación guiada</span></span>
+</label><label class="eval-item" data-mode="guide">
+<input class="eval-check" id="evalOpenContainer" type="checkbox">
+<span><b>Recipientes abiertos</b><small>Evaporación, salpicadura o contaminación.</small><span class="eval-badge guide">Verificación guiada</span></span>
+</label><label class="eval-item" data-mode="guide">
+<input class="eval-check" id="evalCompatibility" type="checkbox">
+<span><b>Compatibilidad de almacenamiento</b><small>Separación de sustancias incompatibles.</small><span class="eval-badge guide">Verificación guiada</span></span>
+</label><label class="eval-item" data-mode="guide">
+<input class="eval-check" id="evalSDS" type="checkbox">
+<span><b>Ficha de Datos de Seguridad</b><small>Disponibilidad y consulta de FDS/SGA.</small><span class="eval-badge guide">Verificación guiada</span></span>
+</label><label class="eval-item" data-mode="guide">
+<input class="eval-check" id="evalVentilation" type="checkbox">
+<span><b>Ventilación / extracción</b><small>Control de vapores, polvo o aerosoles.</small><span class="eval-badge guide">Verificación guiada</span></span>
+</label></div>
+</details><details class="eval-category" data-cat="confined">
+<summary><span>🕳️ Espacios confinados</span><span class="eval-cat-count" id="catCount_confined">0 seleccionados</span></summary>
+<div class="eval-list"><label class="eval-item" data-mode="guide">
+<input class="eval-check" id="evalConfined" type="checkbox">
+<span><b>Evaluación general de espacio confinado</b><small>Identificación del recinto y condiciones de ingreso.</small><span class="eval-badge guide">Verificación guiada</span></span>
+</label><label class="eval-item" data-mode="guide">
+<input class="eval-check" id="evalPermit" type="checkbox">
+<span><b>Permiso / autorización de ingreso</b><small>Permiso y procedimiento previo.</small><span class="eval-badge guide">Verificación guiada</span></span>
+</label><label class="eval-item" data-mode="guide">
+<input class="eval-check" id="evalAtmosphere" type="checkbox">
+<span><b>Medición atmosférica</b><small>O₂, explosividad y contaminantes según riesgo.</small><span class="eval-badge guide">Verificación guiada</span></span>
+</label><label class="eval-item" data-mode="guide">
+<input class="eval-check" id="evalConfVent" type="checkbox">
+<span><b>Ventilación del recinto</b><small>Ventilación natural/mecánica adecuada.</small><span class="eval-badge guide">Verificación guiada</span></span>
+</label><label class="eval-item" data-mode="guide">
+<input class="eval-check" id="evalAttendant" type="checkbox">
+<span><b>Vigía / comunicación</b><small>Persona externa, comunicación y control de ingreso.</small><span class="eval-badge guide">Verificación guiada</span></span>
+</label><label class="eval-item" data-mode="guide">
+<input class="eval-check" id="evalRescue" type="checkbox">
+<span><b>Plan y medios de rescate</b><small>Rescate previsto antes del ingreso.</small><span class="eval-badge guide">Verificación guiada</span></span>
+</label><label class="eval-item" data-mode="guide">
+<input class="eval-check" id="evalIsolation" type="checkbox">
+<span><b>Aislamiento de energías / sustancias</b><small>Bloqueo, cegado, desconexión y control de ingreso.</small><span class="eval-badge guide">Verificación guiada</span></span>
+</label></div>
+</details>
+  <div class="selected-preview" id="selectedPreview">No hay ítems seleccionados.</div>
 </div>
-<div id="sensitivityInfo" class="status warn" style="margin-top:0;margin-bottom:10px">
-  Máxima sensibilidad: detecta desde aprox. 25% de confianza, alerta con 1 lectura y amplía sectores de la imagen por turnos. Puede aumentar falsos positivos.
+</details>
+<div id="poseStatus"<div id="poseStatus" class="pose-box" style="display:none"><strong>Ergonomía IA:</strong> esperando persona…</div><div style="display:none">
+<input id="reqHardhat" type="checkbox"><input id="reqVest" type="checkbox"><input id="reqGoggles" type="checkbox">
+<input id="reqGloves" type="checkbox"><input id="reqHarness" type="checkbox"><input id="reqMask" type="checkbox">
 </div>
-<div id="poseStatus" class="pose-box" style="display:none"><strong>Ergonomía IA:</strong> esperando persona…</div><div class="ppe-box"><div class="ppe-title">EPP exigidos en esta tarea (marcá solo los que correspondan)</div><div class="checks"><label class="check"><input id="reqHardhat" type="checkbox"> Casco</label><label class="check"><input id="reqVest" type="checkbox"> Chaleco</label><label class="check"><input id="reqGoggles" type="checkbox"> Antiparras</label><label class="check"><input id="reqGloves" type="checkbox"> Guantes</label><label class="check"><input id="reqHarness" type="checkbox"> Arnés</label><label class="check"><input id="reqMask" type="checkbox"> Protección respiratoria</label></div></div>
 <section class="card"><div class="camera"><video id="video" playsinline muted></video><canvas id="overlay"></canvas><div id="placeholder" class="placeholder"><div><div style="font-size:43px">🛡️</div><b>Motor preventivo listo</b><br><small>Detección automática + inspección guiada por riesgo.</small></div></div><div class="hud"><span id="modelStatus">IA SST: sin cargar</span><span id="detStatus">0 det.</span></div></div><div class="controls"><button id="startBtn" class="btn btn-primary">Iniciar inspección</button><button id="stopBtn" class="btn btn-secondary" disabled>Detener</button><button id="manualBtn" class="btn btn-secondary" disabled>Capturar y registrar</button><button id="switchBtn" class="btn btn-secondary" disabled>Cambiar cámara</button></div></section>
 <div id="modelInfo" class="status">La V4.1 usa el modelo SST multi-EPP y un barrido de detalle para mejorar detecciones pequeñas o lejanas.</div>
 <div id="alertBox" class="alert"><div class="alert-top"><h3 id="alertTitle">Riesgo detectado</h3><span id="alertConf" class="conf">0%</span></div><p id="alertText"></p><p id="alertNorm"></p><div class="alert-actions"><button id="dismissAlert" class="btn btn-secondary">Descartar</button><button id="confirmAlert" class="btn btn-warn">Confirmar hallazgo</button></div></div>
